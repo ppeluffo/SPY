@@ -123,14 +123,13 @@ class RAW_INIT_GLOBAL_frame:
         if a != b:
             self.response_pload += ';PSENSOR'
 
-        '''
-        # chechsum parametros outputs
-        a = int(self.payload_dict.get('OUT', '0'),16)
-        b = self.PV_checksum_outputs(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_OUT: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+
+        # chechsum parametros aplicacion
+        a = int(self.payload_dict.get('APP', '0'),16)
+        b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
+        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
         if a != b:
-            self.response_pload += ';OUTPUTS'
-        '''
+            self.response_pload += ';APLICACION'
 
         self.send_response()
         return
@@ -254,28 +253,21 @@ class RAW_INIT_GLOBAL_frame:
         return cks
 
 
-    def PV_checksum_outputs(self, d):
-        output_modo = d.get(('DOUTPUTS','MODO'),'OFF')
+    def PV_checksum_aplicacion(self, d):
+        output_modo = d.get(('BASE','APLICACION'),'OFF')
         cks_str = ''
         if output_modo == 'OFF':
-            cks_str = output_modo
-        elif output_modo == 'CONS':
+            cks_str = 'OFF'
+        elif output_modo == 'TANQUE':
+            cks_str = 'TANQUE'
+        elif output_modo == 'PERFORACION':
+            cks_str = 'PERFORACION'
+        elif output_modo == 'CONSIGNA':
             consigna_hhmm1 = int(d.get(('CONS','HHMM1'),'0000'))
             consigna_hhmm2 = int(d.get(('CONS', 'HHMM2'), '0000'))
-            cks_str = '%s;%04d;%04d'.format(output_modo, consigna_hhmm1, consigna_hhmm2)
-        elif output_modo == 'PERF':
-            cks_str = output_modo
-        elif output_modo == 'PLT':
-            pband = float(d.get(('PILOTO','PBAND'),'0.0'))
-            psteps = int(float(d.get(('PILOTO','PSTEPS'),'0')))
-            cks_str = '%s;%.03f;%d'.format(output_modo,pband, psteps )
-            cks_str += ';%04d:%.03f' % ( int(d.get(('PILOTO','HHMM_0'),'0') ), float(d.get(('PILOTO','POUT_0'),'0.0')))
-            cks_str += ';%04d:%.03f' % (int(d.get(('PILOTO', 'HHMM_1'), '0')), float(d.get(('PILOTO', 'POUT_1'), '0.0')))
-            cks_str += ';%04d:%.03f' % (int(d.get(('PILOTO', 'HHMM_2'), '0')), float(d.get(('PILOTO', 'POUT_2'), '0.0')))
-            cks_str += ';%04d:%.03f' % (int(d.get(('PILOTO', 'HHMM_3'), '0')), float(d.get(('PILOTO', 'POUT_3'), '0.0')))
-            cks_str += ';%04d:%.03f' % (int(d.get(('PILOTO', 'HHMM_4'), '0')), float(d.get(('PILOTO', 'POUT_4'), '0.0')))
+            cks_str = 'CONSIGNA,%04d;%04d' % (consigna_hhmm1, consigna_hhmm2)
 
         cks = self.PV_calcular_ckechsum(cks_str)
-        log(module=__name__, function='PV_checksum_outputs', dlgid=self.dlgid, level='SELECT', msg='CKS_OUTPUTS: [{0}][{1}]'.format(cks_str,hex(cks)))
+        log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT', msg='CKS_APLICACION: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
 

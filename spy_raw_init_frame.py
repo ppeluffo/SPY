@@ -71,9 +71,9 @@ class RAW_INIT_frame:
             raw_init_psensor_frame = RAW_INIT_PSENSOR_frame(self.dlgid, self.version, payload_dict, dlgbdconf_dict )
             raw_init_psensor_frame.process()
 
-        if payload_class == 'OUTPUTS':
-            from spy_raw_init_outputs_frame import RAW_INIT_OUTPUTS_frame
-            raw_init_outputs_frame = RAW_INIT_OUTPUTS_frame(self.dlgid, self.version, payload_dict, dlgbdconf_dict )
-            raw_init_outputs_frame.process()
+        if payload_class == 'APP':
+            from spy_raw_init_app_frame import RAW_INIT_APP_frame
+            raw_init_app_frame = RAW_INIT_APP_frame(self.dlgid, self.version, payload_dict, dlgbdconf_dict )
+            raw_init_app_frame.process()
 
         return

@@ -3,36 +3,18 @@
 
 from spy_log import log
 from spy_utils import u_send_response
-from spy_conf_outputs import Confoutputs
+from spy_conf_aplicacion import Confaplicacion
 
 # ------------------------------------------------------------------------------
 
-class RAW_INIT_OUTPUTS_frame:
+class RAW_INIT_APP_frame:
     '''
-    PLOAD=CLASS:OUTPUTS;MODO:OFF
-        CLASS:OUTPUTS
-        MODO:OFF
-    PLOAD=CLASS:OUTPUTS;MODO:CONSIGNA,06,30,23,45
-        CLASS:OUTPUTS
-        MODO:CONSIGNA
-        CHH1:06
-        CMM1:30
-        CHH2:23
-        CMM2:45
-    PLOAD=CLASS:OUTPUTS;MODO:PERF
-        CLASS:OUTPUTS
-        MODO:PERF
-    PLOAD=CLASS:CLASS:OUTPUTS;MODO:PILOTO;STEPS:6;BAND:0.02;SLOT0:06,30,3.45;SLOT1:07,30,2.45;SLOT2:10,30,1.45;SLOT3:12,30,2.45;SLOT4:14,30,3.45;
-        CLASS:OUTPUTS
-        MODO:PILOTO
-        STEPS:6
-        BAND:0.02
-        SLOT0:06,30,3.45
-        SLOT1:07,30,2.45
-        SLOT2:10,30,1.45
-        SLOT3:12,30,2.45
-        SLOT4:14,30,3.45;
-
+    PLOAD=CLASS:APP;AP0:OFF
+        CLASS:APP
+        AP0:OFF
+    PLOAD=CLASS:APP;AP0:CONSIGNA,0630,2345
+        CLASS:APP
+        AP0:CONSIGNA,0630,2345
     '''
 
     def __init__(self, dlgid, version, payload_dict, dlgbdconf_dict):
@@ -46,7 +28,7 @@ class RAW_INIT_OUTPUTS_frame:
 
 
     def send_response(self):
-        pload = 'CLASS:OUTPUTS;{}'.format(self.response_pload)
+        pload = 'CLASS:APP;{}'.format(self.response_pload)
         u_send_response('INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
@@ -58,12 +40,12 @@ class RAW_INIT_OUTPUTS_frame:
 
         # Creo una configuracion tipo 'analog' vacia
         # y la cargo con los datos del datalogger.
-        conf_from_dlg = Confoutputs(self.dlgid)
+        conf_from_dlg = Confaplicacion(self.dlgid)
         conf_from_dlg.init_from_payload(self.payload_dict)
         conf_from_dlg.log(tag='dlgconf')
 
         # Idem pero la cargo con la configuracion de la base de datos
-        conf_from_bd = Confoutputs(self.dlgid)
+        conf_from_bd = Confaplicacion(self.dlgid)
         conf_from_bd.init_from_bd(self.dlgbdconf_dict)
         conf_from_bd.log(tag='bdconf')
 

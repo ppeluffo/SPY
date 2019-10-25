@@ -50,18 +50,39 @@ Host: www.spymovil.com
 
 import os
 # import cgitb
-import configparser
 import sys
 from spy_raw_frame import *
 from spy_log import *
+from spy_config import Config
 
 # -----------------------------------------------------------------------------
 # cgitb.enable()
 #
-Config = configparser.ConfigParser()
-Config.read('spy.conf')
+#Config = configparser.ConfigParser()
+#Config.read('spy.conf')
 #
 # ------------------------------------------------------------------------------
+
+def print_error():
+    print('Argumentos invalidos')
+    print('USO: ./spy.py ')
+    print('''
+     DEBUG_INIT_GLOBAL
+     DEBUG_INIT_BASE
+     DEBUG_INIT_ANALOG
+     DEBUG_INIT_DIGITAL
+     DEBUG_INIT_COUNTER
+     DEBUG_INIT_RANGE
+     DEBUG_INIT_PSENSOR
+     DEBUG_INIT_APP_OFF
+     DEBUG_INIT_APP_CONSIGNA
+     DEBUG_INIT_APP_PERFORACION
+     DEBUG_INIT_APP_TANQUE
+     DEBUG_CTL_SCAN
+     DEBUG_DATA
+     ''')
+    exit(1)
+
 
 if __name__ == '__main__':
 
@@ -70,7 +91,7 @@ if __name__ == '__main__':
 
     query_string = ''
     # Atajo para debugear x consola ( no cgi )!!!
-    if len(sys.argv) > 1:
+    if len(sys.argv) == 2:
         if sys.argv[1] == 'DEBUG_INIT_GLOBAL':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_init_global']
@@ -113,21 +134,27 @@ if __name__ == '__main__':
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
-        elif sys.argv[1] == 'DEBUG_INIT_OUTPUTS_OFF':
+        elif sys.argv[1] == 'DEBUG_INIT_APP_OFF':
             # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_outputs_off']
+            query_string = Config['DEBUG']['debug_init_app_off']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
-        elif sys.argv[1] == 'DEBUG_INIT_OUTPUTS_CONSIGNA':
+        elif sys.argv[1] == 'DEBUG_INIT_APP_CONSIGNA':
             # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_outputs_consigna']
+            query_string = Config['DEBUG']['debug_init_app_consigna']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
-        elif sys.argv[1] == 'DEBUG_INIT_OUTPUTS_PERF':
+        elif sys.argv[1] == 'DEBUG_INIT_APP_PERFORACION':
             # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_outputs_perf']
+            query_string = Config['DEBUG']['debug_init_app_perforacion']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_INIT_APP_TANQUE':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_init_app_tanque']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
@@ -144,13 +171,15 @@ if __name__ == '__main__':
             print('TEST: query_string: {0}'.format(query_string))
 
         else:
-            print('Argumentos invalidos')
-            exit(1)
+            print_error()
 
     else:
         # Leo del cgi
         query_string = os.environ.get('QUERY_STRING')
+        if query_string == None:
+            print_error()
 
+    # Proceso.
     log(module=__name__, function='__init__', level='INFO', msg='RX:[{}]'.format(query_string))
 
     '''

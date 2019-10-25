@@ -9,11 +9,12 @@ Created on Wed Aug 14 09:19:01 2019
 import logging
 import logging.handlers
 import ast
-from spy import Config
+from spy_config import Config
 
 # ------------------------------------------------------------------------------
 def config_logger():
     # logging.basicConfig(filename='log1.log', filemode='a', format='%(asctime)s %(name)s %(levelname)s %(message)s', level = logging.DEBUG, datefmt = '%d/%m/%Y %H:%M:%S' )
+
     logging.basicConfig(level=logging.DEBUG)
 
     # formatter = logging.Formatter('SPX %(asctime)s  [%(levelname)s] [%(name)s] %(message)s', datefmt='%Y-%m-%d %T')

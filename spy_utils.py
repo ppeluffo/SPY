@@ -17,7 +17,7 @@ def u_parse_string( string_to_parse, field_separator=';', key_separator=':'):
         (key ,*value) = pair.split(key_separator)
         # Si la lista tiene al menos 1 elemento, devulevo el primero como str.
         if len(value) > 0:
-            d[key ] = value[0]
+            d[key] = value[0]
         else:
             d[key] = ''
     return d
