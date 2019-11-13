@@ -38,7 +38,7 @@ class APP_CONSIGNA():
 
 
     def log(self, tag=''):
-        log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid, msg='{0} hhmm1={1}: hhmm2={2}'.format(tag, self.chhmm1, self.chhmm2))
+        log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid, msg='{0} hhmm1={1},hhmm2={2}'.format(tag, self.chhmm1, self.chhmm2))
         return
 
 
@@ -46,7 +46,7 @@ class APP_CONSIGNA():
         '''
         Overload de la comparacion donde solo comparo los elementos necesarios
         '''
-        if (self.chhmm1 == other.chhmm1) and ( self.chhmm2 == other.chhmm1):
+        if ( int(self.chhmm1) == int(other.chhmm1) ) and ( int(self.chhmm2) == int(other.chhmm1) ):
             return True
         else:
             return False

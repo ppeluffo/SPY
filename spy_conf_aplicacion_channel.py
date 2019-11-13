@@ -67,6 +67,7 @@ class AplicacionChannel():
         '''
         Overload de la comparacion donde solo comparo los elementos necesarios
         '''
+        #log(module=__name__, function='AplicacionChannel__eq__', level='SELECT', dlgid=self.dlgid, msg='self: app_type:{0}, app:{1}, other: type:{2}, app:{3}'.format(self.app_type, self.app, other.app_type, other.app))
         if ( self.app_type == other.app_type ) and ( self.app == other.app ) :
             return True
         else:

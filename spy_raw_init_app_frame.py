@@ -50,9 +50,9 @@ class RAW_INIT_APP_frame:
         conf_from_bd.log(tag='bdconf')
 
         if conf_from_dlg == conf_from_bd:
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='Conf BASE: BD eq DLG')
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='Conf APP: BD eq DLG')
         else:
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='Conf BASE: BD ne DLG')
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='Conf APP: BD ne DLG')
             self.response_pload = conf_from_bd.get_response_string( conf_from_dlg )
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='RSP=[{}]'.format(self.response_pload))
 

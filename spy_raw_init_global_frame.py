@@ -151,7 +151,6 @@ class RAW_INIT_GLOBAL_frame:
 
         timerdial = d.get(('BASE','TDIAL'),'0')
         timerpoll = d.get(('BASE', 'TPOLL'),'0')
-        aplicacion = d.get(('BASE', 'APP'), 'OFF')
         pwrs_modo = d.get(('BASE', 'PWRS_MODO'),'0')
         if pwrs_modo == '0':
             pwrs_modo = 'OFF'
@@ -167,7 +166,7 @@ class RAW_INIT_GLOBAL_frame:
 
         # Calculo el checksum.
         # Debo hacerlo igual a como lo hago en el datalogger.
-        cks_str = '{},{},{},{},{},{}'.format( aplicacion, timerdial,timerpoll,pwrs_modo, pwrs_start,pwrs_end )
+        cks_str = '{},{},{},{},{}'.format( timerdial,timerpoll,pwrs_modo, pwrs_start,pwrs_end )
         cks = self.PV_calcular_ckechsum(cks_str)
         log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks

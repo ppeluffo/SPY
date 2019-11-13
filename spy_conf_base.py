@@ -29,7 +29,6 @@ class Confbase:
         self.dlgid = dlgid
         self.timerpoll = 0
         self.timerdial = 0
-        self.aplicacion = ''
         self.pwrs_modo = ''
         self.pwrs_start = 0
         self.pwrs_end = 0
@@ -47,7 +46,6 @@ class Confbase:
         '''
         self.timerpoll = int(d.get('TPOLL', '0'))
         self.timerdial = int(d.get('TDIAL', '0'))
-        self.aplicacion = d.get('APP', 'OFF')
         self.pwrs_modo = d.get('PWRS_MODO','OFF')           # El datalogger manda ON u OFF
         self.pwrs_start = int(d.get('PWRS_START','0'))
         self.pwrs_end = int(d.get('PWRS_END','0'))
@@ -56,7 +54,6 @@ class Confbase:
     def init_from_bd(self, d):
         self.timerpoll = int(d.get(('BASE', 'TPOLL'), 0))
         self.timerdial = int(d.get(('BASE', 'TDIAL'), 0))
-        self.aplicacion = d.get(('BASE', 'APLICACION'), 'OFF')
 
         self.pwrs_modo = int(d.get(('BASE', 'PWRS_MODO'), 0))   # En la BD se almacena 0(off) o 1 (on). Convierto !!!
         if self.pwrs_modo == 0:
@@ -69,7 +66,7 @@ class Confbase:
 
 
     def __str__(self):
-        response = 'CONF_BASE: dlgid={0},tpoll={1},tdial={2},app={3},pws={4},{5},{6}'.format( self.dlgid, self.timerpoll,self.timerdial,self.aplicacion, self.pwrs_modo,self.pwrs_start,self.pwrs_end )
+        response = 'CONF_BASE: dlgid={0},tpoll={1},tdial={2},pws={3},{4},{5}'.format( self.dlgid, self.timerpoll,self.timerdial,self.pwrs_modo,self.pwrs_start,self.pwrs_end )
         return response
 
 
@@ -86,8 +83,6 @@ class Confbase:
         log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid,
             msg='{0} tdial={1}'.format(tag, self.timerdial))
         log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid,
-            msg='{0} app={1}'.format(tag, self.aplicacion))
-        log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid,
             msg='{0} pwrs_modo={1}'.format(tag, self.pwrs_modo))
         log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid,
             msg='{0} pwrs_start={1}'.format(tag, self.pwrs_start))
@@ -102,7 +97,6 @@ class Confbase:
         '''
         if ( self.timerpoll == other.timerpoll and
                 self.timerdial == other.timerdial and
-                self.aplicacion == other.aplicacion and
                 self.pwrs_modo == other.pwrs_modo and
                 self.pwrs_start == other.pwrs_start and
                 self.pwrs_end == other.pwrs_end ):
@@ -124,9 +118,6 @@ class Confbase:
 
         if self.timerdial != other.timerdial:
             response += ';TDIAL:%s' % self.timerdial
-
-        if self.aplicacion != other.aplicacion:
-            response += ';APP:%s' % self.aplicacion
 
         if (self.pwrs_modo != other.pwrs_modo or
                 self.pwrs_start != other.pwrs_start or
