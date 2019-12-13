@@ -10,7 +10,7 @@ from spy_conf_digital import Confdigital
 
 class RAW_INIT_DIGITAL_frame:
     '''
-    PLOAD=CLASS:DIGITAL;D0:DINA,1;D1:DINB,0
+    PLOAD=CLASS:DIGITAL;D0:DINA,TIMER;D1:DINB,NORMAL
     '''
 
     def __init__(self, dlgid, version, payload_dict, dlgbdconf_dict):

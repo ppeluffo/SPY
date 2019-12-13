@@ -28,9 +28,9 @@ class Confpsensor:
     def init_from_payload(self, d):
         '''
         Recibo un diccionario resultado del parseo del payload enviado por el datalogger.
-        Las entradas de d son del tipo PS0:CLORO,0,0.7,0.002;
+        Las entradas de d son del tipo PS0:CLORO,1500,7000,0.1,50.5,3.2
         '''
-        self.PS0.init_from_str((d.get('PS0', 'X,0,0,0')))
+        self.PS0.init_from_str((d.get('PS0', 'X,0,0,0,0,0')))
         return
 
 

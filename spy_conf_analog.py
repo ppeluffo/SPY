@@ -33,6 +33,7 @@ class Confanalog:
         self.A7 = AnalogChannel(ach_id = 'A7', dlgid = dlgid)
         return
 
+
     def init_from_payload(self, d):
         '''
         Recibo un diccionario resultado del parseo del payload enviado por el datalogger.
@@ -42,9 +43,9 @@ class Confanalog:
         ch_list = [self.A0, self.A1, self.A2, self.A3, self.A4, self.A5, self.A6, self.A7]
         for (ch_id, ch_obj) in zip(id_list, ch_list ):
             if ch_id in d.keys():
-                ch_obj.init_from_str((d.get( ch_id, 'X,0,0,0,0')), True)
+                ch_obj.init_from_str((d.get( ch_id, 'X,0,0,0,0,0')), True)
             else:
-                ch_obj.init_from_str((d.get( ch_id, 'X,0,0,0,0')), False)
+                ch_obj.init_from_str((d.get( ch_id, 'X,0,0,0,0,0')), False)
 
         return
 
@@ -111,6 +112,7 @@ class Confanalog:
             return False
 
         return True
+
 
     def get_response_string(self, other):
         '''

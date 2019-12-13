@@ -20,20 +20,22 @@ class AnalogChannel():
         self.imax = 0
         self.mmin = 0
         self.mmax = 0
+        self.offset = 0
 
     def init_from_str(self, c_str, presente ):
         '''
-        c_str A1:PA,0,20,0.00,6.00;
+        c_str A1:PA,0,20,0.00,6.00,0;
         Primero vemos que no sea vacio.
         Luego lo parseamos y rellenamos los campos del self.
         '''
         self.presente = presente
         try:
-            ( self.name, self.imin, self.imax, self.mmin, self.mmax, *s ) = re.split(':|,', c_str)
-            self.imin = float(self.imin)
-            self.imax = float(self.imax)
+            ( self.name, self.imin, self.imax, self.mmin, self.mmax, self.offset, *s ) = re.split(':|,', c_str)
+            self.imin = int(self.imin)
+            self.imax = int(self.imax)
             self.mmin = float(self.mmin)
             self.mmax = float(self.mmax)
+            self.offset = float(self.offset)
         except Exception as err_var:
             log(module=__name__, function='init_from_str', level='INFO', dlgid=self.dlgid, msg='ERROR: {0}_unpack {1}'.format(self.id, c_str))
             log(module=__name__, function='init_from_str', dlgid=self.dlgid, msg='EXCEPTION {}'.format(err_var))
@@ -54,12 +56,13 @@ class AnalogChannel():
         self.imax = int(d.get((CH, 'IMAX'), 20))
         self.mmin = float(d.get((CH, 'MMIN'), 0))
         self.mmax = float(d.get((CH, 'MMAX'), 10))
+        self.offset = float(d.get((CH, 'OFFSET'), 0))
         return
 
     def log(self, tag=''):
         log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid,
-            msg='{0} id={1}: name={2} imin={3} imax={4} mmin={5} mmax={6} pres={7}'.format(tag, self.id, self.name, self.imin,
-                                                                                  self.imax, self.mmin, self.mmax, self.presente))
+            msg='{0} id={1}: name={2} imin={3} imax={4} mmin={5} mmax={6} offset={7} pres={8}'.format(tag, self.id, self.name, self.imin,
+                                                                                  self.imax, self.mmin, self.mmax, self.offset, self.presente))
         return
 
     def __eq__(self, other):
@@ -75,7 +78,8 @@ class AnalogChannel():
                 self.imin == other.imin and
                 self.imax == other.imax and
                 self.mmin == other.mmin and
-                self.mmax == other.mmax):
+                self.mmax == other.mmax and
+                self.offset == other.offset):
             return True
         else:
             return False
@@ -93,12 +97,13 @@ class AnalogChannel():
                 self.imin != other.imin or
                 self.imax != other.imax or
                 self.mmin != other.mmin or
-                self.mmax != other.mmax):
+                self.mmax != other.mmax or
+                self.offset != other.offset):
             return True
         else:
             return False
 
 
     def get_response_string(self):
-        response = '%s:%s,%s,%s,%s,%s;' % (self.id, self.name, int(self.imin), int(self.imax), self.mmin, self.mmax)
+        response = '%s:%s,%s,%s,%s,%s,%s;' % (self.id, self.name, int(self.imin), int(self.imax), self.mmin, self.mmax, self.offset )
         return (response)

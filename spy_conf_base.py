@@ -32,6 +32,7 @@ class Confbase:
         self.pwrs_modo = ''
         self.pwrs_start = 0
         self.pwrs_end = 0
+        self.timepwrsensor = 0
         return
 
 
@@ -40,20 +41,22 @@ class Confbase:
         Recibo un diccionario con los datos de la configuracion base que trae el datalogger en el payload.
         TDIAL:1800;
         TPOLL:60;
-        PWRS_MODO:ON;
-        PWRS_START:2330;
-        PWRS_END:645
+        PWST:5;
+        PWRS:ON,2330,0645
         '''
         self.timerpoll = int(d.get('TPOLL', '0'))
         self.timerdial = int(d.get('TDIAL', '0'))
-        self.pwrs_modo = d.get('PWRS_MODO','OFF')           # El datalogger manda ON u OFF
-        self.pwrs_start = int(d.get('PWRS_START','0'))
-        self.pwrs_end = int(d.get('PWRS_END','0'))
+        self.timepwrsensor = int(d.get('PWST', '0'))
+        pwrs = d.get('PWRS','OFF,2300,0600')
+        (self.pwrs_modo,self.pwrs_start,self.pwrs_end)  = pwrs.split(',')
+        self.pwrs_start = int(self.pwrs_start)
+        self.pwrs_end = int(self.pwrs_end)
 
 
     def init_from_bd(self, d):
         self.timerpoll = int(d.get(('BASE', 'TPOLL'), 0))
         self.timerdial = int(d.get(('BASE', 'TDIAL'), 0))
+        self.timepwrsensor = int(d.get(('BASE', 'TIMEPWRSENSOR'), 0))
 
         self.pwrs_modo = int(d.get(('BASE', 'PWRS_MODO'), 0))   # En la BD se almacena 0(off) o 1 (on). Convierto !!!
         if self.pwrs_modo == 0:
@@ -66,7 +69,7 @@ class Confbase:
 
 
     def __str__(self):
-        response = 'CONF_BASE: dlgid={0},tpoll={1},tdial={2},pws={3},{4},{5}'.format( self.dlgid, self.timerpoll,self.timerdial,self.pwrs_modo,self.pwrs_start,self.pwrs_end )
+        response = 'CONF_BASE: dlgid={0},tpoll={1},tdial={2},pws={3},{4},{5},timepwrsensor={6}'.format( self.dlgid, self.timerpoll,self.timerdial,self.pwrs_modo,self.pwrs_start,self.pwrs_end,self.timepwrsensor )
         return response
 
 
@@ -88,6 +91,8 @@ class Confbase:
             msg='{0} pwrs_start={1}'.format(tag, self.pwrs_start))
         log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid,
             msg='{0} pwrs_end={1}'.format(tag, self.pwrs_end))
+        log(module=__name__, function='log', level='SELECT', dlgid=self.dlgid,
+            msg='{0} timepwrsensor={1}'.format(tag, self.timepwrsensor))
         return
 
 
@@ -96,6 +101,7 @@ class Confbase:
         Overload de la comparacion donde solo comparo los elementos necesarios
         '''
         if ( self.timerpoll == other.timerpoll and
+                self.timepwrsensor == other.timepwrsensor and
                 self.timerdial == other.timerdial and
                 self.pwrs_modo == other.pwrs_modo and
                 self.pwrs_start == other.pwrs_start and
@@ -118,6 +124,9 @@ class Confbase:
 
         if self.timerdial != other.timerdial:
             response += ';TDIAL:%s' % self.timerdial
+
+        if self.timepwrsensor != other.timepwrsensor:
+            response += ';PWST:%s' % self.timepwrsensor
 
         if (self.pwrs_modo != other.pwrs_modo or
                 self.pwrs_start != other.pwrs_start or

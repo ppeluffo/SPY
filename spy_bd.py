@@ -9,7 +9,7 @@ Luego, c/metodo me da los parametros que quiera
 """
 from spy_bd_bdspy import BDSPY
 from spy_bd_gda import BDGDA, BDGDA_TAHONA
-#from spy_bd_dlgdb import DLGDB
+from spy_bd_dlgdb import DLGDB
 #from spy_bd_ose import BDOSE_PQ, BDOSE_PZ, BDOSE_TQ
 from spy_log import log
 #------------------------------------------------------------------------------

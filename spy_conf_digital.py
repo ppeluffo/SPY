@@ -35,15 +35,15 @@ class Confdigital:
     def init_from_payload(self, d):
         '''
         Recibo un diccionario resultado del parseo del payload enviado por el datalogger.
-        Las entradas de d son del tipo D0:Q0,0
+        Las entradas de d son del tipo D0:Q0,NORMAL
         '''
         id_list = [ 'D0', 'D1', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7']
         ch_list = [self.D0, self.D1, self.D2, self.D3, self.D4, self.D5, self.D6, self.D7]
         for (ch_id, ch_obj) in zip(id_list, ch_list ):
             if ch_id in d.keys():
-                ch_obj.init_from_str((d.get( ch_id, 'X,0')), True)
+                ch_obj.init_from_str((d.get( ch_id, 'X,NORMAL')), True)
             else:
-                ch_obj.init_from_str((d.get( ch_id, 'X,0')), False)
+                ch_obj.init_from_str((d.get( ch_id, 'X,NORMAL')), False)
 
         return
 

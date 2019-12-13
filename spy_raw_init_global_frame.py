@@ -151,7 +151,8 @@ class RAW_INIT_GLOBAL_frame:
 
         timerdial = d.get(('BASE','TDIAL'),'0')
         timerpoll = d.get(('BASE', 'TPOLL'),'0')
-        pwrs_modo = d.get(('BASE', 'PWRS_MODO'),'0')
+        timepwrsensor = d.get(('BASE', 'TIMEPWRSENSOR'), 0)
+        pwrs_modo = d.get(('BASE', 'PWRS_MODO'), '0')
         if pwrs_modo == '0':
             pwrs_modo = 'OFF'
         elif pwrs_modo == '1':
@@ -166,7 +167,7 @@ class RAW_INIT_GLOBAL_frame:
 
         # Calculo el checksum.
         # Debo hacerlo igual a como lo hago en el datalogger.
-        cks_str = '{},{},{},{},{}'.format( timerdial,timerpoll,pwrs_modo, pwrs_start,pwrs_end )
+        cks_str = '{0},{1},{2},{3},{4},{5}'.format( timerdial,timerpoll,timepwrsensor,pwrs_modo, pwrs_start,pwrs_end )
         cks = self.PV_calcular_ckechsum(cks_str)
         log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
@@ -181,9 +182,9 @@ class RAW_INIT_GLOBAL_frame:
         for ch in range(nro_analog_channels):
             ch_id = 'A{}'.format(ch)            # ch_id = A1
             if (ch_id,'NAME') in d.keys():      # ( 'A1', 'NAME' ) in  d.keys()
-                cks_str += '%s:%s,%d,%d,%.03f,%.03f;' % (ch_id, d.get((ch_id, 'NAME'),'AX'), int(d.get((ch_id, 'IMIN'),'0')), int(d.get((ch_id, 'IMAX'),'0')), float(d.get((ch_id, 'MMIN'),'0')), float(d.get((ch_id, 'MMAX'),'0')) )
+                cks_str += '%s:%s,%d,%d,%.02f,%.02f,%.02f;' % (ch_id, d.get((ch_id, 'NAME'),'AX'), int(d.get((ch_id, 'IMIN'),'0')), int(d.get((ch_id, 'IMAX'),'0')), float(d.get((ch_id, 'MMIN'),'0')), float(d.get((ch_id, 'MMAX'),'0')), float(d.get((ch_id, 'OFFSET'),'0')) )
             else:
-                cks_str += '{}:X,4,20,0.000,10.000;'.format(ch_id)
+                cks_str += '{}:X,4,20,0.00,10.00,0.00;'.format(ch_id)
 
         cks = self.PV_calcular_ckechsum(cks_str)
         log(module=__name__, function='PV_checksum_analog', dlgid=self.dlgid, level='SELECT', msg='CKS_AN ({0}ch): [{1}][{2}]'.format(nro_analog_channels, cks_str,hex(cks)))
@@ -193,13 +194,13 @@ class RAW_INIT_GLOBAL_frame:
     def PV_checksum_digital(self, d):
         # Los canales digitales van del 0 hasta el 7 ( maximo )
         # Pueden faltar algunos que no usemos por lo que no esten definidos.
-        # D0:D0,1;D1:D1,1;
+        # D0:D0,TIMER;D1:D1,NORMAL;
         cks_str = ''
         nro_digital_channels = int(self.payload_dict.get('NDCH', '0'))
         for ch in range(nro_digital_channels):
             ch_id = 'D{}'.format(ch)            # ch_id = D1
             if (ch_id,'NAME') in d.keys():      # ( 'D1', 'NAME' ) in  d.keys()
-                if int(d.get((ch_id, 'MODO'),'0')) == 0:
+                if d.get((ch_id, 'MODO'),'NORMAL') == 'NORMAL':
                     # Modo NORMAL
                     cks_str += '%s:%s,NORMAL;' % (ch_id, d.get((ch_id, 'NAME'),'DX'))
                 else:
@@ -242,11 +243,13 @@ class RAW_INIT_GLOBAL_frame:
 
 
     def PV_checksum_psensor(self, d):
-        name = d.get(('PSENS','NAME'),'X')
-        pmin = float(d.get(('PSENS', 'PMIN'),'0'))
-        pmax = float(d.get(('PSENS', 'PMAX'),'0'))
-        poffset = float(d.get(('PSENS', 'POFFSET'),'0'))
-        cks_str = '%s,%.03f,%.03f,%.03f' % (name,pmin,pmax,poffset)
+        name = d.get(('PSENSOR', 'NAME'), 'X')
+        count_min = int(d.get(('PSENSOR', 'COUNT_MIN'), 0))
+        count_max = int(d.get(('PSENSOR', 'COUNT_MAX'), 0))
+        p_max = float(d.get(('PSENSOR', 'PRESION_MAX'), 0))
+        p_min = float(d.get(('PSENSOR', 'PRESION_MIN'), 0))
+        offset = float(d.get(('PSENSOR', 'OFFSET'), 0))
+        cks_str = '%s,%d,%d,%.01f,%.01f,%.01f' % (name,count_min,count_max, p_min,p_max,offset)
         cks = self.PV_calcular_ckechsum(cks_str)
         log(module=__name__, function='PV_checksum_psensor', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENSOR: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
