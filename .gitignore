@@ -1,7 +1,6 @@
 errFiles
 .idea
 __pycache__
-spy_bd_dlgdb.py
 tmp.txt
 tmpFiles
 uteFiles
