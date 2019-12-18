@@ -43,9 +43,9 @@ class Confanalog:
         ch_list = [self.A0, self.A1, self.A2, self.A3, self.A4, self.A5, self.A6, self.A7]
         for (ch_id, ch_obj) in zip(id_list, ch_list ):
             if ch_id in d.keys():
-                ch_obj.init_from_str((d.get( ch_id, 'X,0,0,0,0,0')), True)
+                ch_obj.init_from_str((d.get( ch_id, 'X,4,20,0.00,10.00,0.00')), True)
             else:
-                ch_obj.init_from_str((d.get( ch_id, 'X,0,0,0,0,0')), False)
+                ch_obj.init_from_str((d.get( ch_id, 'X,4,20,0.00,10.00,0.00')), False)
 
         return
 
@@ -81,12 +81,14 @@ class Confanalog:
     def __eq__(self, other):
         '''
         Overload de la comparacion donde solo comparo los elementos necesarios
-        self: conf_from_dlg
-        other: conf_from_bd:
+        self: conf_from_bd
+        other: conf_from_dlg:
         '''
         #log(module=__name__, function='D_A0', level='SELECT', dlgid=self.dlgid, msg='A0: {}'.format(self.A0.presente))
         #self.A0.log()
         #other.A0.log()
+
+        '''
         if self.A0.presente and ( self.A0 != other.A0):
             return False
 
@@ -110,6 +112,30 @@ class Confanalog:
 
         if self.A7.presente and ( self.A7 != other.A7):
             return False
+        '''
+        if self.A0 != other.A0:
+            return False
+
+        if self.A1 != other.A1:
+            return False
+
+        if self.A2 != other.A2:
+            return False
+
+        if self.A3 != other.A3:
+            return False
+
+        if self.A4 != other.A4:
+            return False
+
+        if self.A5 != other.A5:
+            return False
+
+        if self.A6 != other.A6:
+            return False
+
+        if self.A7 != other.A7:
+            return False
 
         return True
 
@@ -123,6 +149,7 @@ class Confanalog:
         '''
         response = ''
         #log(module=__name__, function='DEBUG_A0', level='SELECT', dlgid=self.dlgid, msg='dlgA0: {}'.format(other.A0.presente))
+        '''
         if other.A0.presente and (self.A0 != other.A0):
             response += self.A0.get_response_string()
             #log(module=__name__, function='DEBUG_A0', level='SELECT', dlgid=self.dlgid, msg='RSP: {}'.format(response))
@@ -140,6 +167,24 @@ class Confanalog:
             response += self.A6.get_response_string()
         if self.A7.presente and (self.A7 != other.A7):
             response += self.A7.get_response_string()
+        '''
 
+        if (self.A0 != other.A0):
+            response += self.A0.get_response_string()
+            #log(module=__name__, function='DEBUG_A0', level='SELECT', dlgid=self.dlgid, msg='RSP: {}'.format(response))
+        if (self.A1 != other.A1):
+            response += self.A1.get_response_string()
+        if (self.A2 != other.A2):
+            response += self.A2.get_response_string()
+        if (self.A3 != other.A3):
+            response += self.A3.get_response_string()
+        if (self.A4 != other.A4):
+            response += self.A4.get_response_string()
+        if (self.A5 != other.A5):
+            response += self.A5.get_response_string()
+        if (self.A6 != other.A6):
+            response += self.A6.get_response_string()
+        if (self.A7 != other.A7):
+            response += self.A7.get_response_string()
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confanalog_RSP: {}'.format(response))
         return response

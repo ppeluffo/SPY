@@ -51,12 +51,13 @@ class AnalogChannel():
             self.presente = True
         else:
             self.presente = False
+
         self.name = d.get((CH, 'NAME'), 'X')
         self.imin = int(d.get((CH, 'IMIN'), 4))
         self.imax = int(d.get((CH, 'IMAX'), 20))
-        self.mmin = float(d.get((CH, 'MMIN'), 0))
-        self.mmax = float(d.get((CH, 'MMAX'), 10))
-        self.offset = float(d.get((CH, 'OFFSET'), 0))
+        self.mmin = float(d.get((CH, 'MMIN'), 0.00))
+        self.mmax = float(d.get((CH, 'MMAX'), 10.00))
+        self.offset = float(d.get((CH, 'OFFSET'), 0.00))
         return
 
     def log(self, tag=''):

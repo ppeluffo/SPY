@@ -207,11 +207,11 @@ class RAW_INIT_GLOBAL_frame:
                     # Modo TIMER
                     cks_str += '%s:%s,TIMER;' % (ch_id, d.get((ch_id, 'NAME'),'DX'))
             else:
-                cks_str += '{}:X,0,NORMAL;'.format(ch_id)
+                cks_str += '{}:X,NORMAL;'.format(ch_id)
 
 
         cks = self.PV_calcular_ckechsum(cks_str)
-        log(module=__name__, function='PV_checksum_digital', dlgid=self.dlgid, level='SELECT', msg='CKS_DG ({0}ch): [{1}][{2}]'.format(nro_digital_channels, cks_str,hex(cks)))
+        log(module=__name__, function='PV_checksum_digital', dlgid=self.dlgid, level='SELECT', msg='CKS_DG ({0}ch): [{1}][{2}]'.format(nro_digital_channels,cks_str,hex(cks)))
         return cks
 
 

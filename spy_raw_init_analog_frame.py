@@ -44,7 +44,7 @@ class RAW_INIT_ANALOG_frame:
         conf_from_bd.init_from_bd(self.dlgbdconf_dict)
         conf_from_bd.log(tag='bdconf')
 
-        if conf_from_dlg == conf_from_bd:
+        if conf_from_bd == conf_from_dlg:
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='Conf BASE: BD eq DLG')
         else:
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='Conf BASE: BD ne DLG')

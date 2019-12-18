@@ -80,6 +80,7 @@ class Confdigital:
         '''
         Overload de la comparacion donde solo comparo los elementos necesarios
         '''
+        '''
         if self.D0.presente and ( self.D0 != other.D0):
             return False
         if self.D1.presente and ( self.D1 != other.D1):
@@ -96,7 +97,23 @@ class Confdigital:
             return False
         if self.D7.presente and ( self.D7 != other.D7):
             return False
-
+        '''
+        if ( self.D0 != other.D0):
+            return False
+        if ( self.D1 != other.D1):
+            return False
+        if ( self.D2 != other.D2):
+            return False
+        if ( self.D3 != other.D3):
+            return False
+        if ( self.D4 != other.D4):
+            return False
+        if ( self.D5 != other.D5):
+            return False
+        if  (self.D6 != other.D6):
+            return False
+        if ( self.D7 != other.D7):
+            return False
         return True
 
 
@@ -108,6 +125,7 @@ class Confdigital:
         El other es el objeto con los datos del datalogger
         '''
         response = ''
+        '''
         if other.D0.presente and (self.D0 != other.D0):
             response += self.D0.get_response_string()
         if other.D1.presente and (self.D1 != other.D1):
@@ -123,6 +141,23 @@ class Confdigital:
         if other.D6.presente and (self.D6 != other.D6):
             response += self.D6.get_response_string()
         if other.D7.presente and (self.D7 != other.D7):
+            response += self.D7.get_response_string()
+        '''
+        if (self.D0 != other.D0):
+            response += self.D0.get_response_string()
+        if (self.D1 != other.D1):
+            response += self.D1.get_response_string()
+        if (self.D2 != other.D2):
+            response += self.D2.get_response_string()
+        if (self.D3 != other.D3):
+            response += self.D3.get_response_string()
+        if (self.D4 != other.D4):
+            response += self.D4.get_response_string()
+        if (self.D5 != other.D5):
+            response += self.D5.get_response_string()
+        if (self.D6 != other.D6):
+            response += self.D6.get_response_string()
+        if (self.D7 != other.D7):
             response += self.D7.get_response_string()
 
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid,

@@ -117,7 +117,6 @@ def process_line( line, bd):
     return True
 
 
-
 def process_file(file):
     '''
     Recibo el nombre de un archivo el cual abro y voy leyendo c/linea

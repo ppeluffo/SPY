@@ -54,10 +54,17 @@ class Confcounter:
         '''
         Overload de la comparacion donde solo comparo los elementos necesarios
         '''
+        '''
         if self.C0.presente and ( self.C0 != other.C0):
             return False
         if self.C1.presente and ( self.C1 != other.C1):
             return False
+        '''
+        if ( self.C0 != other.C0):
+            return False
+        if ( self.C1 != other.C1):
+            return False
+
         return True
 
 
@@ -69,9 +76,15 @@ class Confcounter:
         El other es el objeto con los datos del datalogger
         '''
         response = ''
+        '''
         if other.C0.presente and (self.C0 != other.C0):
             response += self.C0.get_response_string()
         if other.C1.presente and (self.C1 != other.C1):
+            response += self.C1.get_response_string()
+        '''
+        if (self.C0 != other.C0):
+            response += self.C0.get_response_string()
+        if (self.C1 != other.C1):
             response += self.C1.get_response_string()
 
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid,
