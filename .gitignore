@@ -1,4 +1,5 @@
 errFiles
+bkFiles
 .idea
 __pycache__
 tmp.txt

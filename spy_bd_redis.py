@@ -12,7 +12,7 @@ pip3 install redis
 
 import redis
 from spy_log import log
-
+from spy_config import Config
 
 # ------------------------------------------------------------------------------
 
@@ -26,7 +26,7 @@ class Redis():
         self.connected = ''
         self.rh = ''
         try:
-            self.rh = redis.Redis()
+            self.rh = redis.Redis(host=Config['REDIS']['host'], port=Config['REDIS']['port'], db=Config['REDIS']['db'])
             self.connected = True
         except Exception as err_var:
             log(module=__name__, function='__init__', dlgid=self.dlgid, msg='Redis init ERROR !!')

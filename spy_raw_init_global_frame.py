@@ -227,7 +227,7 @@ class RAW_INIT_GLOBAL_frame:
                 # La velocidad en la BD es LS o HS
                 cks_str += '%s:%s,%.03f,%d,%d,%s;' % (ch_id, d.get((ch_id, 'NAME'),'CX'), float(d.get((ch_id, 'MAGPP'),'0')), int(d.get((ch_id, 'PERIOD'),'0')),int(d.get((ch_id, 'PWIDTH'),'0')), d.get((ch_id,'SPEED'),'LS') )
             else:
-                cks_str += '{}:X,0.000,0,0,LS;'.format(ch_id)
+                cks_str += '{}:X,0.100,10,100,LS;'.format(ch_id)
 
         cks = self.PV_calcular_ckechsum(cks_str)
         log(module=__name__, function='PV_checksum_counters', dlgid=self.dlgid, level='SELECT', msg='CKS_CNT ({0}ch): [{1}][{2}]'.format(nro_counter_channels, cks_str,hex(cks)))

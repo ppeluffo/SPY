@@ -51,7 +51,7 @@ class CounterChannel():
         else:
             self.presente = False
         self.name = d.get((CH, 'NAME'), 'X')
-        self.magpp = float(d.get((CH, 'MAGPP'), 0.1))
+        self.magpp = float(d.get((CH, 'MAGPP'), 0.100))
         self.pwidth = int(d.get((CH, 'PWIDTH'), 10))
         self.period = int(d.get((CH, 'PERIOD'), 100))
         self.speed = d.get((CH, 'SPEED'), 'LS')
