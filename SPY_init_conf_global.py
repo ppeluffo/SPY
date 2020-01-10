@@ -15,12 +15,13 @@ from datetime import datetime
 import os
 import cgi
 from spy_bd import BD
+from spy_bd_bdspy import BDSPY
 from spy_bd_redis import Redis
 from spy import Config
 
 # ------------------------------------------------------------------------------
 
-class RAW_INIT_GLOBAL_frame:
+class INIT_CONF_GLOBAL:
     '''
     PLOAD=CLASS:GLOBAL;NACH:5;NDCH:3;NCNT:3;SIMPWD:DEFAULT;IMEI:860585004367917;SIMID:895980161423091055;CSQ:87;WRST:0x00;BASE:0x32;AN:0xCB;DG:0x1A;CNT:0x47;RG:0xF7;PSE:0x73;OUT:0xB2
     '''
@@ -51,6 +52,18 @@ class RAW_INIT_GLOBAL_frame:
         Si algun checksum no coincide voy agregandolo a la respuesta al server.
         '''
         log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='start')
+
+        # Veo si esta autorizado y actualizo el uid
+        uid = self.payload_dict.get('UID', '0000')
+        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG dlgid={0},uid={1}'.format(self.dlgid, uid))
+
+        if uid != '000':
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG UID Not default'.format(self.dlgid, uid))
+            bd = BDSPY(modo=Config['MODO']['modo'] )
+            if not bd.check_auth(self.dlgid, uid):
+                self.response_pload += ':NOT_ALLOWED'
+                self.send_response()
+                return
 
         '''
         La configuracion del dlg de la base de datos ya fue leida en la clase superior RAW_INIT y se encuentra
@@ -259,17 +272,87 @@ class RAW_INIT_GLOBAL_frame:
         output_modo = d.get(('BASE','APLICACION'),'OFF')
         cks_str = ''
         if output_modo == 'OFF':
-            cks_str = 'OFF'
+            cks_str = self.PV_checksum_str_app_off(d)
         elif output_modo == 'TANQUE':
-            cks_str = 'TANQUE'
+            cks_str = self.PV_checksum_str_app_tanque(d)
         elif output_modo == 'PERFORACION':
-            cks_str = 'PERFORACION'
+            cks_str = self.PV_checksum_str_app_perforacion(d)
         elif output_modo == 'CONSIGNA':
-            consigna_hhmm1 = int(d.get(('CONS','HHMM1'),'0000'))
-            consigna_hhmm2 = int(d.get(('CONS', 'HHMM2'), '0000'))
-            cks_str = 'CONSIGNA,%04d;%04d' % (consigna_hhmm1, consigna_hhmm2)
+            cks_str = self.PV_checksum_str_app_consigna(d)
+        elif output_modo == 'PLANTAPOT':
+            cks_str = self.PV_checksum_str_app_plantapot(d)
 
         cks = self.PV_calcular_ckechsum(cks_str)
         log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT', msg='CKS_APLICACION: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
 
+
+    def PV_checksum_str_app_off(self,d):
+        cks_str = 'OFF'
+        return(cks_str)
+
+    def PV_checksum_str_app_tanque(self,d):
+        cks_str = 'TANQUE'
+        return(cks_str)
+
+    def PV_checksum_str_app_perforacion(self,d):
+        cks_str = 'PERFORACION'
+        return(cks_str)
+
+    def PV_checksum_str_app_consigna(self,d):
+        consigna_hhmm1 = int(d.get(('CONS', 'HHMM1'), '0000'))
+        consigna_hhmm2 = int(d.get(('CONS', 'HHMM2'), '0000'))
+        cks_str = 'CONSIGNA,%04d,%04d' % (consigna_hhmm1, consigna_hhmm2)
+        return(cks_str)
+
+    def PV_checksum_str_app_plantapot(self,d):
+        # header
+        cks_str = 'PPOT;'
+
+        # sms's
+        level_default = 1
+        for i in range(9):
+            name = 'SMS{}'.format(i)
+            nivel = 'NV_SMS{}'.format(i)
+            nro_default = '099' + str(i) * 6
+
+            SMS_nro = d.get(('PPOT', name), nro_default)
+            if SMS_nro == '':
+                SMS_nro = nro_default
+            SMS_nivel = d.get(('PPOT', nivel), level_default)
+            if SMS_nivel == '':
+                SMS_nivel = level_default
+
+            level_default += 1
+            if level_default > 3:
+                level_default = 1
+
+            cks_str += "SMS0{0}:{1},{2};".format(i, SMS_nro, SMS_nivel)
+
+        # levels
+        from spy_utils import d_defaults
+        for ch in range(6):
+            CH = 'CH{}'.format(ch)
+            cks_str += 'LCH{}:'.format(ch)
+            for level in range(1, 4):
+                LVL_INF = 'A{}_INF'.format(level)
+                LVL_SUP = 'A{}_SUP'.format(level)
+                def_val_inf = d_defaults[CH][LVL_INF]
+                def_val_sup = d_defaults[CH][LVL_SUP]
+
+                val_inf = d.get((CH, LVL_INF), def_val_inf)
+                if val_inf == '':
+                    val_inf = def_val_inf
+
+                val_sup = d.get((CH, LVL_SUP), def_val_sup)
+                if val_sup == '':
+                    val_sup = def_val_sup
+
+                cks_str += '%.02f,%.02f' % (float(val_inf), float(val_sup))
+                if level < 3:
+                    cks_str += ','
+                else:
+                    cks_str += ';'
+
+        # print(cks_str)
+        return cks_str

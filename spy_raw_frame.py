@@ -40,17 +40,17 @@ class RAW_frame:
 
         tipo_frame = form.get('TYPE', 'ERROR')
         if tipo_frame == 'CTL':
-            from spy_raw_ctl_frame import RAW_CTL_frame
+            from spy_raw_frame_ctl import RAW_CTL_frame
             raw_clt_frame = RAW_CTL_frame(dlgid, version, payload_str)
             raw_clt_frame.process()
 
         elif tipo_frame == 'INIT':
-            from spy_raw_init_frame import RAW_INIT_frame
+            from spy_raw_frame_init import RAW_INIT_frame
             raw_init_frame = RAW_INIT_frame(dlgid, version, payload_str)
             raw_init_frame.process()
 
         elif tipo_frame == 'DATA':
-            from spy_raw_data_frame import RAW_DATA_frame
+            from spy_raw_frame_data import RAW_DATA_frame
             raw_data_frame = RAW_DATA_frame(dlgid, version, payload_str)
             raw_data_frame.process()
 

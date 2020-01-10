@@ -29,6 +29,8 @@ class BD:
         self.server = server
         self.datasource = ''
 
+        log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
+
         bd = BDSPY(self.modo)
         self.datasource = bd.find_data_source(self.dlgid)
         if self.datasource == 'GDA':

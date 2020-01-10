@@ -60,7 +60,7 @@ class RAW_CTL_frame:
             la clase especializada que en realidad hace el trabajo pueda acceder a todos los datos
             de las clases superiores.
             '''
-            from spy_raw_ctl_scan_frame import RAW_CTL_SCAN_frame
+            from SPY_ctl_scan import RAW_CTL_SCAN_frame
             raw_ctl_scan_frame = RAW_CTL_SCAN_frame(self.dlgid,self.version,payload_dict )
             raw_ctl_scan_frame.process()
 

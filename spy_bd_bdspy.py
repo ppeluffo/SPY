@@ -14,7 +14,6 @@ from spy_log import log
 # ------------------------------------------------------------------------------
 class BDSPY:
 
-
     def __init__(self, modo='local', server='comms'):
 
         self.datasource = ''
@@ -27,13 +26,15 @@ class BDSPY:
         if modo == 'spymovil':
             self.url = Config['BDATOS']['url_bdspy_spymovil']
         elif modo == 'local':
-            import pymysql
-            pymysql.install_as_MySQLdb()
             self.url = Config['BDATOS']['url_bdspy_local']
+        elif modo == 'ute':
+            self.url = Config['BDATOS']['url_bdpsy_ute']
+
+        log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
         return
 
 
-    def connect(self):
+    def connect(self, tag='BDSPY'):
         """
         Si no estoy conectado a la BD intento conectarme.
         Retorna True/False si es posible generar una conexion a la bd BDSPY
@@ -45,8 +46,8 @@ class BDSPY:
             self.engine = create_engine(self.url)
         except Exception as err_var:
             self.connected = False
-            log(module=__name__, server = self.server, function='connect', msg='ERROR: BDSPY engine NOT created. ABORT !!')
-            log(module=__name__, server = self.server, function='connect', msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server=self.server, function='connect', msg='ERROR_{}: engine NOT created. ABORT !!'.format(tag))
+            log(module=__name__, server=self.server, function='connect',  msg='ERROR: EXCEPTION_{0} {1}'.format(tag, err_var))
             exit(1)
 
         try:
@@ -55,7 +56,7 @@ class BDSPY:
             return True
         except Exception as err_var:
             self.connected = False
-            log(module=__name__, server = self.server, function='connect', msg='ERROR: BDSPY NOT connected. ABORT !!')
+            log(module=__name__, server = self.server, function='connect', msg='ERROR_{}: BDSPY NOT connected. ABORT !!'.format(tag))
             log(module=__name__, server = self.server, function='connect', msg='ERROR: EXCEPTION {}'.format(err_var))
             exit(1)
 
@@ -70,7 +71,7 @@ class BDSPY:
         """
 
         if not self.connect():
-            log(module=__name__,function='dlg_is_defined', dlgid=dlgid, msg='ERROR: can\'t connect bdspy !!')
+            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t connect bdspy !!')
             return False
 
         # Vemos si el dlg esta definido en la BDSPY
@@ -78,8 +79,8 @@ class BDSPY:
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, function='dlg_is_defined', dlgid=dlgid, msg='ERROR: can\'t exec bdspy !!')
-            log(module=__name__, function='dlg_is_defined', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t exec bdspy !!')
+            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: EXCEPTION {}'.format(err_var))
             return False
 
         row = rp.first()
@@ -97,15 +98,15 @@ class BDSPY:
         En este caso guardamos el dlgid en el self para luego ser consultado.
         """
         if not self.connect():
-            log(module=__name__, function='uid_is_defined', msg='ERROR: can\'t connect bdspy !!')
+            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t connect bdspy !!')
             return False
 
         query = text("SELECT dlgid FROM spy_equipo WHERE uid = '{}'".format (uid))
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, function='uid_is_defined', msg='ERROR: can\'t exec bdspy !!')
-            log(module=__name__, function='uid_is_defined', msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t exec bdspy !!')
+            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: EXCEPTION {}'.format(err_var))
             return False
 
         row = rp.first()
@@ -177,6 +178,7 @@ class BDSPY:
 
 
     def check_auth(self, dlgid, uid):
+        log(module=__name__, function='__init__', dlgid=dlgid, msg='start')
         if not self.dlg_is_defined(dlgid):
            return False
         #El dlgid esta en la BD. Actualizo su UID
@@ -204,7 +206,7 @@ class BDSPY:
             return False
 
         # PASS2: Actualizo el UID.
-        sql = "UPDATE spy_equipo SET uid='{}' WHERE dlgid='{}'".format(uid,dlgid)
+        sql = "UPDATE spy_equipo SET uid='{0}' WHERE dlgid='{1}'".format(uid,dlgid)
         try:
             query = text(sql)
         except Exception as err_var:

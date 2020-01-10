@@ -67,19 +67,21 @@ def print_error():
     print('Argumentos invalidos')
     print('USO: ./spy.py ')
     print('''
-     DEBUG_INIT_GLOBAL
-     DEBUG_INIT_BASE
-     DEBUG_INIT_ANALOG
-     DEBUG_INIT_DIGITAL
-     DEBUG_INIT_COUNTER
-     DEBUG_INIT_RANGE
-     DEBUG_INIT_PSENSOR
-     DEBUG_INIT_APP_OFF
-     DEBUG_INIT_APP_CONSIGNA
-     DEBUG_INIT_APP_PERFORACION
-     DEBUG_INIT_APP_TANQUE
+     DEBUG_CONF_AUTH
+     DEBUG_CONF_GLOBAL     
+     DEBUG_CONF_BASE
+     DEBUG_CONF_ANALOG
+     DEBUG_CONF_DIGITAL
+     DEBUG_CONF_COUNTER
+     DEBUG_CONF_PSENSOR
+     DEBUG_CONF_RANGE 
+     DEBUG_CONF_APP 
+     DEBUG_CONF_PPOT_SMS
+     DEBUG_CONF_PPOT_LEVELS
+     
      DEBUG_CTL_SCAN
      DEBUG_DATA
+       
      ''')
     exit(1)
 
@@ -92,73 +94,8 @@ if __name__ == '__main__':
     query_string = ''
     # Atajo para debugear x consola ( no cgi )!!!
     if len(sys.argv) == 2:
-        if sys.argv[1] == 'DEBUG_INIT_GLOBAL':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_global']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string [{0}]'.format(query_string))
 
-        elif sys.argv[1] == 'DEBUG_INIT_BASE':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_base']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_ANALOG':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_analog']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_DIGITAL':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_digital']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_COUNTER':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_counter']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_RANGE':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_range']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_PSENSOR':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_psensor']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_APP_OFF':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_app_off']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_APP_CONSIGNA':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_app_consigna']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_APP_PERFORACION':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_app_perforacion']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_INIT_APP_TANQUE':
-            # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_init_app_tanque']
-            os.environ['QUERY_STRING'] = query_string
-            print('TEST: query_string: {0}'.format(query_string))
-
-        elif sys.argv[1] == 'DEBUG_CTL_SCAN':
+        if sys.argv[1] == 'DEBUG_CTL_SCAN':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_ctl_scan']
             os.environ['QUERY_STRING'] = query_string
@@ -167,6 +104,72 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'DEBUG_DATA':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_data']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_AUTH':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_auth']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string [{0}]'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_GLOBAL':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_global']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string [{0}]'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_BASE':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_base']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_ANALOG':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_analog']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_DIGITAL':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_digital']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_COUNTER':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_counter']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_PSENSOR':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_psensor']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_RANGE':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_range']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_APP':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_app']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_PPOT_SMS':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_ppot_sms']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_PPOT_LEVELS':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_ppot_levels']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
