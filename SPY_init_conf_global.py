@@ -10,14 +10,31 @@ Host: www.spymovil.com
 
 
 from spy_log import log
-from spy_utils import u_send_response
+from spy_utils import u_send_response,  u_get_fw_version
 from datetime import datetime
 import os
 import cgi
-from spy_bd import BD
+from spy_bd_gda import BDGDA
 from spy_bd_bdspy import BDSPY
 from spy_bd_redis import Redis
 from spy import Config
+
+hash_table = [ 93,  153, 124,  98, 233, 146, 184, 207, 215,  54, 208, 223, 254, 216, 162, 141,
+		 10,  148, 232, 115,   7, 202,  66,  31,   1,  33,  51, 145, 198, 181,  13,  95,
+		 242, 110, 107, 231, 140, 170,  44, 176, 166,   8,   9, 163, 150, 105, 113, 149,
+		 171, 152,  58, 133, 186,  27,  53, 111, 210,  96,  35, 240,  36, 168,  67, 213,
+		 12,  123, 101, 227, 182, 156, 190, 205, 218, 139,  68, 217,  79,  16, 196, 246,
+		 154, 116,  29, 131, 197, 117, 127,  76,  92,  14,  38,  99,   2, 219, 192, 102,
+		 252,  74,  91, 179,  71, 155,  84, 250, 200, 121, 159,  78,  69,  11,  63,   5,
+		 126, 157, 120, 136, 185,  88, 187, 114, 100, 214, 104, 226,  40, 191, 194,  50,
+		 221, 224, 128, 172, 135, 238,  25, 212,   0, 220, 251, 142, 211, 244, 229, 230,
+		 46,   89, 158, 253, 249,  81, 164, 234, 103,  59,  86, 134,  60, 193, 109,  77,
+		 180, 161, 119, 118, 195,  82,  49,  20, 255,  90,  26, 222,  39,  75, 243, 237,
+		 17,   72,  48, 239,  70,  19,   3,  65, 206,  32, 129,  57,  62,  21,  34, 112,
+		 4,    56, 189,  83, 228, 106,  61,   6,  24, 165, 201, 167, 132,  45, 241, 247,
+		 97,   30, 188, 177, 125,  42,  18, 178,  85, 137,  41, 173,  43, 174,  73, 130,
+		 203, 236, 209, 235,  15,  52,  47,  37,  22, 199, 245,  23, 144, 147, 138,  28,
+		 183,  87, 248, 160,  55,  64, 204,  94, 225, 143, 175, 169,  80, 151, 108, 122 ]
 
 # ------------------------------------------------------------------------------
 
@@ -70,7 +87,7 @@ class INIT_CONF_GLOBAL:
         en self.dlgbdconf_dict
         '''
         # Parametros administrativos:
-        simpwd = self.payload_dict.get('SIMPWD', 'ERROR')
+        #simpwd = self.payload_dict.get('SIMPWD', 'ERROR')
         wrst = self.payload_dict.get('WRST', 'ERROR')
         d = dict()
         try:
@@ -84,10 +101,10 @@ class INIT_CONF_GLOBAL:
         d['CSQ'] = self.payload_dict.get('CSQ', 'ERROR')
         d['SIMID'] = self.payload_dict.get('SIMID', 'ERROR')
         d['COMMITED_CONF'] = 0
-
-        # Actualizo la BD con estos datos.
-        bd = BD( modo = Config['MODO']['modo'], dlgid = self.dlgid )
-        bd.bdr.update(self.dlgid,d)
+        d['UID'] = 'ver_bdspy'
+        # Actualizo la GDA con estos datos.
+        bd = BDGDA( modo = Config['MODO']['modo'])
+        bd.update(self.dlgid,d)
         # Creo un registo inicialiado en la redis.
         redis_db = Redis(self.dlgid).create_rcd()
 
@@ -148,6 +165,14 @@ class INIT_CONF_GLOBAL:
         return
 
 
+    def PV_calcular_hash_checksum(self, line):
+        checksum = 0
+        for ch in line:
+            checksum = hash_table[ (checksum ^ ord(ch))]
+
+        return checksum
+
+
     def PV_calcular_ckechsum(self, line):
         '''
         Cambiamos la forma de calcular el checksum porque el xor
@@ -164,7 +189,7 @@ class INIT_CONF_GLOBAL:
 
         timerdial = d.get(('BASE','TDIAL'),'0')
         timerpoll = d.get(('BASE', 'TPOLL'),'0')
-        timepwrsensor = d.get(('BASE', 'TIMEPWRSENSOR'), 0)
+        timepwrsensor = d.get(('BASE', 'TIMEPWRSENSOR'), 1)
         pwrs_modo = d.get(('BASE', 'PWRS_MODO'), '0')
         if pwrs_modo == '0':
             pwrs_modo = 'OFF'
@@ -178,11 +203,25 @@ class INIT_CONF_GLOBAL:
         if int(pwrs_end) < 1000:
             pwrs_end = '0' + pwrs_end
 
+        counters_hw = d.get(('BASE', 'HW_CONTADORES'), 'OPTO')
+
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+
         # Calculo el checksum.
         # Debo hacerlo igual a como lo hago en el datalogger.
-        cks_str = '{0},{1},{2},{3},{4},{5}'.format( timerdial,timerpoll,timepwrsensor,pwrs_modo, pwrs_start,pwrs_end )
-        cks = self.PV_calcular_ckechsum(cks_str)
-        log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: [{0}][{1}]'.format(cks_str,hex(cks)))
+        cks_str = ''
+        if fw_version >= 300:
+            cks_str = '{0},{1},{2},{3},{4},{5},{6},'.format(timerdial, timerpoll, timepwrsensor, pwrs_modo, pwrs_start,  pwrs_end, counters_hw)
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        elif fw_version >= 299:
+            # Las versiones nuevas llevan el control de counters_hw
+            cks_str = '{0},{1},{2},{3},{4},{5},{6},'.format( timerdial,timerpoll,timepwrsensor,pwrs_modo, pwrs_start,pwrs_end, counters_hw )
+            cks = self.PV_calcular_ckechsum(cks_str)
+        else:
+            cks_str = '{0},{1},{2},{3},{4},{5},'.format(timerdial, timerpoll, timepwrsensor, pwrs_modo, pwrs_start, pwrs_end)
+            cks = self.PV_calcular_ckechsum(cks_str)
+
+        log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: (fw={0}) [{1}][{2}]'.format( fw_version, cks_str,hex(cks)))
         return cks
 
 
@@ -199,7 +238,12 @@ class INIT_CONF_GLOBAL:
             else:
                 cks_str += '{}:X,4,20,0.00,10.00,0.00;'.format(ch_id)
 
-        cks = self.PV_calcular_ckechsum(cks_str)
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+        if fw_version >= 300:
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        else:
+            cks = self.PV_calcular_ckechsum(cks_str)
+
         log(module=__name__, function='PV_checksum_analog', dlgid=self.dlgid, level='SELECT', msg='CKS_AN ({0}ch): [{1}][{2}]'.format(nro_analog_channels, cks_str,hex(cks)))
         return cks
 
@@ -222,8 +266,12 @@ class INIT_CONF_GLOBAL:
             else:
                 cks_str += '{}:X,NORMAL;'.format(ch_id)
 
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+        if fw_version >= 300:
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        else:
+            cks = self.PV_calcular_ckechsum(cks_str)
 
-        cks = self.PV_calcular_ckechsum(cks_str)
         log(module=__name__, function='PV_checksum_digital', dlgid=self.dlgid, level='SELECT', msg='CKS_DG ({0}ch): [{1}][{2}]'.format(nro_digital_channels,cks_str,hex(cks)))
         return cks
 
@@ -232,25 +280,58 @@ class INIT_CONF_GLOBAL:
         # Los canales contadores son maximo 2
         # Pueden faltar algunos que no usemos por lo que no esten definidos.
         # C0:C0,1.000,100,10,0;C1:C1,1.000,100,10,0;
+
         cks_str = ''
         nro_counter_channels = int(self.payload_dict.get('NCNT', '0'))
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+        #log(module=__name__, function='PV_checksum_counters', dlgid=self.dlgid, level='SELECT', msg='fw_version={0}]'.format(fw_version))
         for ch in range(nro_counter_channels):
             ch_id = 'C{}'.format(ch)            # ch_id = C1
-            if (ch_id,'NAME') in d.keys():      # ( 'C1', 'NAME' ) in  d.keys()
-                # La velocidad en la BD es LS o HS
-                cks_str += '%s:%s,%.03f,%d,%d,%s;' % (ch_id, d.get((ch_id, 'NAME'),'CX'), float(d.get((ch_id, 'MAGPP'),'0')), int(d.get((ch_id, 'PERIOD'),'0')),int(d.get((ch_id, 'PWIDTH'),'0')), d.get((ch_id,'SPEED'),'LS') )
-            else:
-                cks_str += '{}:X,0.100,10,100,LS;'.format(ch_id)
+            modo = ''
 
-        cks = self.PV_calcular_ckechsum(cks_str)
-        log(module=__name__, function='PV_checksum_counters', dlgid=self.dlgid, level='SELECT', msg='CKS_CNT ({0}ch): [{1}][{2}]'.format(nro_counter_channels, cks_str,hex(cks)))
+            if fw_version >= 301:
+                if (ch_id, 'NAME') in d.keys():
+                    cks_str += '%s:%s,%.03f,%d,%d,%s,%s;' % (ch_id, d.get((ch_id, 'NAME'), 'CX'), float(d.get((ch_id, 'MAGPP'), '0')), int(d.get((ch_id, 'PERIOD'), '0')), int(d.get((ch_id, 'PWIDTH'), '0')),d.get((ch_id, 'SPEED'), 'LS'),d.get((ch_id, 'EDGE'), 'RISE'))
+                    modo = '301/BD'
+                else:
+                    cks_str += '{}:X,0.100,100,10,LS,RISE;'.format(ch_id)
+                    modo = '301/DEFAULT'
+
+                cks = self.PV_calcular_hash_checksum(cks_str)
+
+            elif fw_version >= 300:
+                if (ch_id, 'NAME') in d.keys():
+                    cks_str += '%s:%s,%.03f,%d,%d,%s;' % (ch_id, d.get((ch_id, 'NAME'), 'CX'), float(d.get((ch_id, 'MAGPP'), '0')),int(d.get((ch_id, 'PERIOD'), '0')), int(d.get((ch_id, 'PWIDTH'), '0')),d.get((ch_id, 'SPEED'), 'LS'))
+                    modo = '300/BD'
+                else:
+                    cks_str += '{}:X,0.100,100,10,LS;'.format(ch_id)
+                    modo = '300/DEFAULT'
+
+                cks = self.PV_calcular_hash_checksum(cks_str)
+
+            else:
+                if (ch_id, 'NAME') in d.keys():
+                    cks_str += '%s:%s,%.03f,%d,%d,%s;' % (ch_id, d.get((ch_id, 'NAME'), 'CX'), float(d.get((ch_id, 'MAGPP'), '0')),int(d.get((ch_id, 'PERIOD'), '0')), int(d.get((ch_id, 'PWIDTH'), '0')),d.get((ch_id, 'SPEED'), 'LS'))
+                    modo = '2xx/BD'
+                else:
+                    cks_str += '{}:X,0.100,100,10,LS;'.format(ch_id)
+                    modo = '2xx/DEFAULT'
+
+                cks = self.PV_calcular_ckechsum(cks_str)
+
+        log(module=__name__, function='PV_checksum_counters', dlgid=self.dlgid, level='SELECT', msg='CKS_CNT ({0}ch): [{1}][{2} modo={3}]'.format(nro_counter_channels, cks_str,hex(cks), modo))
         return cks
 
 
     def PV_checksum_range(self, d):
         name = d.get(('RANGE','NAME'),'X')
         cks_str = '{}'.format(name)
-        cks = self.PV_calcular_ckechsum(cks_str)
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+        if fw_version >= 300:
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        else:
+            cks = self.PV_calcular_ckechsum(cks_str)
+
         log(module=__name__, function='PV_checksum_range', dlgid=self.dlgid, level='SELECT', msg='CKS_RANGE: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
 
@@ -263,7 +344,13 @@ class INIT_CONF_GLOBAL:
         p_min = float(d.get(('PSENSOR', 'PRESION_MIN'), 0))
         offset = float(d.get(('PSENSOR', 'OFFSET'), 0))
         cks_str = '%s,%d,%d,%.01f,%.01f,%.01f' % (name,count_min,count_max, p_min,p_max,offset)
-        cks = self.PV_calcular_ckechsum(cks_str)
+
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+        if fw_version >= 300:
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        else:
+            cks = self.PV_calcular_ckechsum(cks_str)
+
         log(module=__name__, function='PV_checksum_psensor', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENSOR: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
 
@@ -282,7 +369,12 @@ class INIT_CONF_GLOBAL:
         elif output_modo == 'PLANTAPOT':
             cks_str = self.PV_checksum_str_app_plantapot(d)
 
-        cks = self.PV_calcular_ckechsum(cks_str)
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+        if fw_version >= 300:
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        else:
+            cks = self.PV_calcular_ckechsum(cks_str)
+
         log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT', msg='CKS_APLICACION: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
 
@@ -291,19 +383,23 @@ class INIT_CONF_GLOBAL:
         cks_str = 'OFF'
         return(cks_str)
 
+
     def PV_checksum_str_app_tanque(self,d):
         cks_str = 'TANQUE'
         return(cks_str)
+
 
     def PV_checksum_str_app_perforacion(self,d):
         cks_str = 'PERFORACION'
         return(cks_str)
 
+
     def PV_checksum_str_app_consigna(self,d):
-        consigna_hhmm1 = int(d.get(('CONS', 'HHMM1'), '0000'))
-        consigna_hhmm2 = int(d.get(('CONS', 'HHMM2'), '0000'))
-        cks_str = 'CONSIGNA,%04d,%04d' % (consigna_hhmm1, consigna_hhmm2)
+        cons_hhmm1 = int(d.get(('CONS', 'HHMM1'), '0000'))
+        cons_hhmm2 = int(d.get(('CONS', 'HHMM2'), '0000'))
+        cks_str = 'CONSIGNA,%04d,%04d' % ( cons_hhmm1, cons_hhmm2 )
         return(cks_str)
+
 
     def PV_checksum_str_app_plantapot(self,d):
         # header
@@ -356,3 +452,13 @@ class INIT_CONF_GLOBAL:
 
         # print(cks_str)
         return cks_str
+
+
+if __name__ == '__main__':
+    str = "C0:PCAU,1.000,1000,100,LS;C1:X,0.100,100,10,LS;"
+    #str = "C0:PCAU,1.000,1000,100,LS;"
+    #str = "C1:X,0.100,100,10,LS;"
+    cglobal = INIT_CONF_GLOBAL("MER007", "3.0.0a", None, None)
+    cks = cglobal.PV_calcular_hash_checksum(str)
+    print("STR={0}".format(str))
+    print("CKS={0}, hex={1}".format(cks, hex(cks)))

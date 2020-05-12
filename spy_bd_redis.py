@@ -121,6 +121,24 @@ class Redis():
 
         return (response)
 
+    def execute_callback(self):
+        '''
+        True:     si existe la variable TYPE para self.dlgid en redis.
+        False:    si no existe la variable TYPE en redis o existe con los siguientes valores [ 0 0.0 ''  () [] {} None ]
+        '''
+        # CHEQUEO SI EXISTE LA VARIABLE TYPE.
+        log(module=__name__, function='execute_callback', dlgid=self.dlgid, msg='CALL_BACKS ==> CHEQUEO TYPE')
+        if self.rh.hexists(self.dlgid, 'TYPE'):
+            # CHEQUEO QUE TYPE TIENE VALOR COHERENTE
+            if bool(self.rh.hget(self.dlgid, 'TYPE')):
+                log(module=__name__, function='execute_callback', dlgid=self.dlgid, msg='CALL_BACKS ==> EXISTE TYPE')
+                return True
+            else:
+                log(module=__name__, function='execute_callback', dlgid=self.dlgid, msg='CALL_BACKS ==> NO EXISTE TYPE')
+                return False
+        else:
+            return False
+
 
 if __name__ == '__main__':
     print('Testing Redis module')
@@ -140,3 +158,4 @@ if __name__ == '__main__':
     response = rd.get_cmd_reset()
     print('RSP=%s' % response)
 
+#

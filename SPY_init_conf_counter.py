@@ -7,7 +7,7 @@ Created on Wed Aug  7 20:51:49 2019
 """
 
 from spy_log import log
-from spy_utils import u_send_response
+from spy_utils import u_send_response,  u_get_fw_version
 
 # ------------------------------------------------------------------------------
 
@@ -25,7 +25,9 @@ class INIT_CONF_COUNTER:
             self.pwidth = int(dconf.get((ch, 'PWIDTH'), 10))
             self.period = int(dconf.get((ch, 'PERIOD'), 100))
             self.speed = dconf.get((ch, 'SPEED'), 'LS')
-            self.response += '{0}:{1},{2},{3},{4},{5};'.format( ch, self.name, self.magpp, self.pwidth, self.period, self.speed )
+            self.edge = dconf.get((ch, 'EDGE'), 'RISE')
+
+            self.response += '{0}:{1},{2},{3},{4},{5},{6};'.format( ch, self.name, self.magpp, self.pwidth, self.period, self.speed,self.edge )
 
         return
 

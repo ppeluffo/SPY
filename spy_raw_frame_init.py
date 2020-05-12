@@ -1,7 +1,7 @@
 #!/usr/bin/python3 -u
 
 from spy_utils import u_parse_payload,u_send_response
-from spy_bd import BD
+from spy_bd_gda import BDGDA
 from spy import Config
 from spy_log import log
 
@@ -39,12 +39,9 @@ class RAW_INIT_frame:
         # en todos los frames de INITS.
         # Si no tengo un datasource valido salgo.
 
-        bd = BD( modo = Config['MODO']['modo'], dlgid = self.dlgid )
-        if bd.datasource == 'DS_ERROR':
-            u_send_response(type='INIT',pload='STATUS:ERROR_DS')
-            return
+        bd = BDGDA( modo = Config['MODO']['modo'] )
+        dlgbdconf_dict = bd.read_dlg_conf(self.dlgid)
 
-        dlgbdconf_dict = bd.read_dlg_conf()
         if dlgbdconf_dict == {}:
             log(module=__name__, function='process', dlgid=self.dlgid, msg='ERROR: No hay datos en la BD')
             u_send_response(type='INIT',pload='STATUS:ERROR_DICT')
@@ -100,7 +97,6 @@ class RAW_INIT_frame:
             init_conf_app.process()
             return
 
-
         if payload_class == 'CONF_PPOT_SMS':
             from SPY_init_conf_ppot_sms import INIT_CONF_PPOT_SMS
             init_conf_ppot_sms = INIT_CONF_PPOT_SMS(self.dlgid, self.version, dlgbdconf_dict)
@@ -111,6 +107,12 @@ class RAW_INIT_frame:
             from SPY_init_conf_ppot_levels import INIT_CONF_PPOT_LEVELS
             init_conf_ppot_levels = INIT_CONF_PPOT_LEVELS(self.dlgid, self.version, dlgbdconf_dict)
             init_conf_ppot_levels.process()
+            return
+
+        if payload_class == 'CONF_CONSIGNA':
+            from SPY_init_conf_consigna import INIT_CONF_CONSIGNA
+            init_conf_consigna = INIT_CONF_CONSIGNA(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_consigna.process()
             return
 
         return

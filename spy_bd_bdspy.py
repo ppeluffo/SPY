@@ -84,6 +84,8 @@ class BDSPY:
             return False
 
         row = rp.first()
+        log(module=__name__, function='dlg_is_defined', dlgid=self.dlgid, msg='query={}'.format(query))
+        log(module=__name__, function='dlg_is_defined', dlgid=self.dlgid, msg='row={}'.format(row))
         if row is None:  # Veo no tener resultado vacio !!!
             return False
         else:
@@ -110,6 +112,8 @@ class BDSPY:
             return False
 
         row = rp.first()
+        log(module=__name__, function='uid_is_defined', dlgid=self.dlgid, msg='query={}'.format(query))
+        log(module=__name__, function='uid_is_defined', dlgid=self.dlgid, msg='row={}'.format(row))
         if row is None:
             return False
         else:
@@ -191,19 +195,30 @@ class BDSPY:
             log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid, msg='ERROR: can\'t connect !!')
             return False
 
+        log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='UID={}'.format(uid))
+
+        # Controlo integridad: UID <> 00000
+        if uid == '00000':
+            log(module=__name__, server=self.server, function='update_uid', dlgid='DEBUG', msg='ERROR: dlgid={0}, uid={1}!!'.format(dlgid,uid))
+            return False
+
         # PASS1: Pongo todos los UID que coincidan en ''
         sql = "UPDATE spy_equipo SET uid = '' WHERE uid='{}'".format(uid)
+        query = ''
         try:
             query = text(sql)
         except Exception as err_var:
             log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
             log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
             return False
+
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
             log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
             return False
+
+        #log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='Borro todas UID OK!')
 
         # PASS2: Actualizo el UID.
         sql = "UPDATE spy_equipo SET uid='{0}' WHERE dlgid='{1}'".format(uid,dlgid)
@@ -213,8 +228,12 @@ class BDSPY:
             log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
             log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
             return False
+
+        #log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='Update UID query={}'.format(query))
+
         try:
             rp = self.conn.execute(query)
+            log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='Updated UID OK!')
         except Exception as err_var:
             log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
             return False

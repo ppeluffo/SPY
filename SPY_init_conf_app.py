@@ -29,9 +29,7 @@ class INIT_CONF_APP:
         elif self.aplicacion == 'TANQUE':
             self.response = 'AP0:TANQUE;'
         elif self.aplicacion == 'CONSIGNA':
-            hhmm1 = dconf.get(('CONS', 'HHMM1'), '2300')
-            hhmm2 = dconf.get(('CONS', 'HHMM2'), '0600')
-            self.response = 'AP0:CONSIGNA,{0},{1};'.format(hhmm1, hhmm2)
+            self.response = 'AP0:CONSIGNA;'
         elif self.aplicacion == 'PLANTAPOT':
             self.response = 'AP0:PLANTAPOT;'
 

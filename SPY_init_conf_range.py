@@ -20,7 +20,7 @@ class INIT_CONF_RANGE:
 
         self.name = dconf.get(('RANGE', 'NAME'), 'X')
 
-        self.response = 'R0:{}  ;'.format( self.name )
+        self.response = 'R0:{};'.format( self.name )
         return
 
     def process(self):

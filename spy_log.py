@@ -36,7 +36,7 @@ def config_logger():
 
 # ------------------------------------------------------------------------------
 
-def log(module, function, server = 'comms', msg='', dlgid='00000', console=False, level='INFO'):
+def log(module, function, server = 'commsR1', msg='', dlgid='00000', console=False, level='INFO'):
     '''
     Se encarga de mandar la logfile el mensaje.
     Si el level es SELECT, dependiendo del dlgid se muestra o no

@@ -20,6 +20,7 @@ class BDGDA:
         self.conn = ''
         self.connected = False
         self.server = server
+        self.url = ''
 
         if modo == 'spymovil':
             self.url = Config['BDATOS']['url_gda_spymovil']
@@ -178,6 +179,7 @@ class BDGDA:
             return False
 
         # PASS1: Inserto frame en la tabla de INITS.
+        query = ''
         sql = """INSERT IGNORE INTO spx_inits (fecha,dlgid_id,csq,rxframe) VALUES ( NOW(), \
                      ( SELECT id FROM spx_unidades WHERE dlgid = '{0}'), '{1}', '{2}')""" .format(dlgid, d['CSQ'], d['RCVDLINE'])
         try:
@@ -186,6 +188,16 @@ class BDGDA:
             log(module=__name__, server=self.server, function='update', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
             log(module=__name__, server=self.server, function='update', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
             return False
+
+        try:
+            rp = self.conn.execute(query)
+        except Exception as err_var:
+             if 'Duplicate entry' in str(err_var):
+                # Los duplicados no hacen nada malo. Se da mucho en testing.
+                log(module=__name__, server=self.server, function='update', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
+             else:
+                log(module=__name__, server=self.server, function='update', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+
 
         # PASS2: Actualizo los parametros dinamicos
         for key in d:
@@ -200,6 +212,15 @@ class BDGDA:
                 log(module=__name__, server=self.server, function='update', dlgid=dlgid,msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
                 return False
 
+            try:
+                rp = self.conn.execute(query)
+            except Exception as err_var:
+                if 'Duplicate entry' in str(err_var):
+                    # Los duplicados no hacen nada malo. Se da mucho en testing.
+                    log(module=__name__, server=self.server, function='update', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
+                else:
+                    log(module=__name__, server=self.server, function='update', dlgid=dlgid, msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+
             log(module=__name__, server=self.server, function='update', dlgid=dlgid, level='SELECT', msg='{0}: {1}={2}'.format(tag, key,value))
 
         return
@@ -213,8 +234,8 @@ class BDGDA:
         log(module=__name__, function='process_commited_conf', dlgid=dlgid, level='SELECT', msg='start')
 
         if not self.connect():
-            log(module=__name__, function='process_commited_conf', dlgid=dlgid, msg='ERROR: can\'t connect {0} !!'.format(tag))
-            return
+            log(module=__name__, function='process_commited_conf', dlgid='DEBUG', msg='ERROR: dlgid={0} can\'t connect {1} !!'.format(dlgid, tag))
+            return(-1)
 
         sql = """SELECT value, configuracion_id FROM spx_configuracion_parametros WHERE parametro = 'COMMITED_CONF' 
                      AND configuracion_id = ( SELECT id FROM spx_unidades_configuracion WHERE nombre = 'BASE' 
@@ -222,17 +243,22 @@ class BDGDA:
         try:
             query = text(sql)
         except Exception as err_var:
-            log(module=__name__, server=self.server, function='process_commited_conf', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
-            log(module=__name__, server=self.server, function='process_commited_conf', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
-            return False
+            log(module=__name__, server=self.server, function='process_commited_conf', dlgid='DEBUG', msg='ERROR_{0}: dlgid={1}, SQLQUERY: {2}'.format(tag, dlgid, sql))
+            log(module=__name__, server=self.server, function='process_commited_conf', dlgid='DEBUG', msg='ERROR_{0}: dlgid={1}, EXCEPTION {2}'.format(tag, dlgid, err_var))
+            return (-1)
 
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, server=self.server, function='process_commited_conf', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-            return False
-        #row = rp.first()
-        cc, rid = rp.first()
+            log(module=__name__, server=self.server, function='process_commited_conf', dlgid='DEBUG', msg='ERROR_{0} dlgid={1}: exec EXCEPTION {2}'.format(tag, dlgid, err_var))
+            return (-1)
+
+        row = rp.first()
+        if row == None:
+            log(module=__name__, server=self.server, function='process_commited_conf', dlgid='DEBUG', msg='ERROR dlgid={0}: rp.first() NONE'.format(dlgid) )
+            return (-1)
+
+        cc, rid = row
         log(module=__name__, function='process_commited_conf', dlgid=dlgid, msg='{0}: cc={1}'.format(tag, cc))
         return (cc)
 
@@ -373,6 +399,7 @@ class BDGDA:
             return False
         else:
             return True
+
 
 
 class BDGDA_TAHONA(BDGDA):

@@ -76,6 +76,7 @@ def print_error():
      DEBUG_CONF_PSENSOR
      DEBUG_CONF_RANGE 
      DEBUG_CONF_APP 
+     DEBUG_CONF_CONSIGNA
      DEBUG_CONF_PPOT_SMS
      DEBUG_CONF_PPOT_LEVELS
      
@@ -170,6 +171,12 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'DEBUG_CONF_PPOT_LEVELS':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_conf_ppot_levels']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_CONSIGNA':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_app_consigna']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 

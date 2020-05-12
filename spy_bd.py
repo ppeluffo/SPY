@@ -10,7 +10,7 @@ Luego, c/metodo me da los parametros que quiera
 from spy_bd_bdspy import BDSPY
 from spy_bd_gda import BDGDA, BDGDA_TAHONA
 from spy_bd_dlgdb import DLGDB
-#from spy_bd_ose import BDOSE_PQ, BDOSE_PZ, BDOSE_TQ
+from spy_bd_ose import BDOSE_PQ, BDOSE_PZ, BDOSE_TQ
 from spy_log import log
 #------------------------------------------------------------------------------
 class BD:
@@ -33,6 +33,7 @@ class BD:
 
         bd = BDSPY(self.modo)
         self.datasource = bd.find_data_source(self.dlgid)
+
         if self.datasource == 'GDA':
             self.bdr = BDGDA(self.modo, server)
         elif self.datasource == 'GDA_TAHONA':
@@ -47,7 +48,7 @@ class BD:
             self.bdr = DLGDB(self.modo, server)
         else:
             self.datasource = 'DS_ERROR'
-            log(module=__name__, server=server, function='__init__', level='INFO', dlgid='PROC00', msg='ERROR: DLGID={0}:DS={1} NOT implemented'.format(dlgid, self.datasource))
+            log(module=__name__, server=server, function='__init__', level='INFO', dlgid='DEBUGBD', msg='ERROR: DLGID={0}:DS={1} NOT implemented'.format(dlgid, self.datasource))
 
         return
 
@@ -114,8 +115,10 @@ class BD:
 
 
     def insert_data_line(self,d):
-        return self.bdr.insert_data_line(self.dlgid, d )
+        #log(module=__name__, function='insert_data_line', dlgid=self.dlgid, msg='START')
+        return (self.bdr.insert_data_line(self.dlgid, d ))
 
 
     def insert_data_online(self,d):
+        #log(module=__name__, function='insert_data_online', dlgid=self.dlgid, msg='START')
         return self.bdr.insert_data_online(self.dlgid, d)

@@ -36,7 +36,7 @@ class RAW_frame:
         version = form.get('VER', 'R0.0.0')
         payload_str = form.get('PLOAD', 'ERROR')
 
-        log(module=__name__, function='process', dlgid=dlgid, msg='start')
+        log(module=__name__, function='process', dlgid=dlgid, level='INFO', msg='start')
 
         tipo_frame = form.get('TYPE', 'ERROR')
         if tipo_frame == 'CTL':

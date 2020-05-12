@@ -24,7 +24,7 @@ import signal
 from spy_config import Config
 from spy_utils import u_parse_string
 
-MAXPROCESS = 5
+MAXPROCESS = 10
 # -----------------------------------------------------------------------------
 #Config = configparser.ConfigParser()
 #Config.read('spy.conf')
@@ -155,7 +155,7 @@ def process_file(file, d_parsConf, bd ):
                         #move_file_to_error_dir(file)
                         return
 
-    #move_file_to_bkup_dir(file)
+    move_file_to_bkup_dir(file)
 
     return
 
