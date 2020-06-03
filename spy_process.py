@@ -109,6 +109,7 @@ def process_file(file):
         log(module=__name__, server='processR1', function='process_file', level='SELECT', dlgid='SPYPROC01',msg='ERROR: DS not found !!')
         move_file_to_error_dir(file)
         return
+
     elif bd.datasource == 'GDA':
         # Los archivos de GDA ya los procese al recibir el frame.
         # Si hubo error ya lo movi al directorio de errores.
@@ -117,40 +118,40 @@ def process_file(file):
         os.remove(file)
         return
 
-    print('Im a child with pid {0} and FILE {1}'.format(os.getpid(), file))
-    with open(file) as myfile:
-        # El archivo trae una sola linea con varios frames enganchados.
-        #     CTL:1;DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;CTL:2;DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:1
-        #     2.33;CTL:3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
-        #
-        for bulkline in myfile:
-            #log(module=__name__, server='process', function='process_file', level='SELECT', dlgid='PROC00',msg='bulkline={}'.format(bulkline))
-            lines_list = bulkline.split('CTL:')
-            #   1;DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
-            #   2;DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
-            #   3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
-            for item in lines_list:
-                try:
-                    (ctl_code, data_line) = item.split(';DATE')
-                except:
-                    continue
-
-                # Renormalizo la linea
-                data_line = 'DATE' + data_line
-                log(module=__name__, server='processR1', function='process_file', level='SELECT', dlgid='SPYPROC01', msg='line={}'.format(data_line))
-
-                if not process_line( dlgid, data_line, bd):
-                    move_file_to_error_dir(file)
-                    return
-
-    del bd
-
-    if Config['SITE']['site'] == 'ute':
-        move_file_to_ute_dir(file)
     else:
-        move_file_to_bkup_dir(file)
+        print('Im a child with pid {0} and FILE {1}'.format(os.getpid(), file))
+        with open(file) as myfile:
+            # El archivo trae una sola linea con varios frames enganchados.
+            #     CTL:1;DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;CTL:2;DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:1
+            #     2.33;CTL:3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
+            #
+            for bulkline in myfile:
+                #log(module=__name__, server='process', function='process_file', level='SELECT', dlgid='PROC00',msg='bulkline={}'.format(bulkline))
+                lines_list = bulkline.split('CTL:')
+                #   1;DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
+                #   2;DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
+                #   3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
+                for item in lines_list:
+                    try:
+                        (ctl_code, data_line) = item.split(';DATE')
+                    except:
+                        continue
 
-    return
+                    # Renormalizo la linea
+                    data_line = 'DATE' + data_line
+                    log(module=__name__, server='processR1', function='process_file', level='SELECT', dlgid='SPYPROC01', msg='line={}'.format(data_line))
+
+                    if not process_line( dlgid, data_line, bd):
+                        move_file_to_error_dir(file)
+                        return
+        del bd
+
+        if Config['SITE']['site'] == 'ute':
+            move_file_to_ute_dir(file)
+        else:
+            move_file_to_bkup_dir(file)
+
+        return
 
 
 if __name__ == '__main__':

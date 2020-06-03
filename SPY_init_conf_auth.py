@@ -45,7 +45,7 @@ class INIT_CONF_AUTH:
         '''
         El procesamiento consiste ver si en la BDSPY hay una entrada con el DLGID y el UID.
         '''
-        log(module=__name__, function='process', level='SELECT', dlgid=self.dlgid, msg='dlgid={0},uid={1}'.format(self.dlgid,self.uid))
+        log(module=__name__, function='CONF_AUTH_process', level='SELECT', dlgid=self.dlgid, msg='dlgid={0},uid={1}'.format(self.dlgid,self.uid))
         bd = BDSPY(modo = Config['MODO']['modo'])
 
         if bd.dlg_is_defined(self.dlgid):
@@ -57,13 +57,13 @@ class INIT_CONF_AUTH:
             bd.update_uid(self.dlgid, self.uid)
             pload = 'CLASS:AUTH;STATUS:OK'
             u_send_response('INIT', pload)
-            log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
+            log(module=__name__, function='CONF_AUTH_send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
 
         elif bd.uid_is_defined(self.uid):
             dlgid_from_bd = bd.get_dlgid_from_uid(self.uid)
             pload = 'CLASS:AUTH;STATUS:RECONF;DLGID:{}'.format(dlgid_from_bd)
             u_send_response('INIT', pload)
-            log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
+            log(module=__name__, function='CONF_AUTH_send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
 
         else:
             '''
@@ -72,7 +72,7 @@ class INIT_CONF_AUTH:
             '''
             pload = 'CLASS:AUTH;STATUS:ERROR_DS'
             u_send_response('INIT', pload)
-            log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
+            log(module=__name__, function='CONF_AUTH_send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
 
         return
 

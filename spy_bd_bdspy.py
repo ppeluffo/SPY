@@ -30,7 +30,7 @@ class BDSPY:
         elif modo == 'ute':
             self.url = Config['BDATOS']['url_bdpsy_ute']
 
-        log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
+        log(module=__name__, function='BDSPY__init__', dlgid=self.dlgid, msg='start')
         return
 
 
@@ -46,8 +46,8 @@ class BDSPY:
             self.engine = create_engine(self.url)
         except Exception as err_var:
             self.connected = False
-            log(module=__name__, server=self.server, function='connect', msg='ERROR_{}: engine NOT created. ABORT !!'.format(tag))
-            log(module=__name__, server=self.server, function='connect',  msg='ERROR: EXCEPTION_{0} {1}'.format(tag, err_var))
+            log(module=__name__, server=self.server, function='BDSPY_connect', msg='ERROR_{}: engine NOT created. ABORT !!'.format(tag))
+            log(module=__name__, server=self.server, function='BDSPY_connect',  msg='ERROR: EXCEPTION_{0} {1}'.format(tag, err_var))
             exit(1)
 
         try:
@@ -56,8 +56,8 @@ class BDSPY:
             return True
         except Exception as err_var:
             self.connected = False
-            log(module=__name__, server = self.server, function='connect', msg='ERROR_{}: BDSPY NOT connected. ABORT !!'.format(tag))
-            log(module=__name__, server = self.server, function='connect', msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR_{}: BDSPY NOT connected. ABORT !!'.format(tag))
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR: EXCEPTION {}'.format(err_var))
             exit(1)
 
         return (False)
@@ -71,7 +71,7 @@ class BDSPY:
         """
 
         if not self.connect():
-            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t connect bdspy !!')
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR_BDSPY: can\'t connect bdspy !!')
             return False
 
         # Vemos si el dlg esta definido en la BDSPY
@@ -79,13 +79,13 @@ class BDSPY:
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t exec bdspy !!')
-            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR_BDSPY: can\'t exec bdspy !!')
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR_BDSPY: EXCEPTION {}'.format(err_var))
             return False
 
         row = rp.first()
-        log(module=__name__, function='dlg_is_defined', dlgid=self.dlgid, msg='query={}'.format(query))
-        log(module=__name__, function='dlg_is_defined', dlgid=self.dlgid, msg='row={}'.format(row))
+        log(module=__name__, function='BDSPY_dlg_is_defined', dlgid=self.dlgid, msg='query={}'.format(query))
+        log(module=__name__, function='BDSPY_dlg_is_defined', dlgid=self.dlgid, msg='row={}'.format(row))
         if row is None:  # Veo no tener resultado vacio !!!
             return False
         else:
@@ -100,20 +100,20 @@ class BDSPY:
         En este caso guardamos el dlgid en el self para luego ser consultado.
         """
         if not self.connect():
-            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t connect bdspy !!')
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR_BDSPY: can\'t connect bdspy !!')
             return False
 
         query = text("SELECT dlgid FROM spy_equipo WHERE uid = '{}'".format (uid))
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: can\'t exec bdspy !!')
-            log(module=__name__, server = self.server, function='connect', msg='ERROR_BDSPY: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR_BDSPY: can\'t exec bdspy !!')
+            log(module=__name__, server = self.server, function='BDSPY_connect', msg='ERROR_BDSPY: EXCEPTION {}'.format(err_var))
             return False
 
         row = rp.first()
-        log(module=__name__, function='uid_is_defined', dlgid=self.dlgid, msg='query={}'.format(query))
-        log(module=__name__, function='uid_is_defined', dlgid=self.dlgid, msg='row={}'.format(row))
+        log(module=__name__, function='BDSPY_uid_is_defined', dlgid=self.dlgid, msg='query={}'.format(query))
+        log(module=__name__, function='BDSPY_uid_is_defined', dlgid=self.dlgid, msg='row={}'.format(row))
         if row is None:
             return False
         else:
@@ -123,15 +123,15 @@ class BDSPY:
     def get_dlgid_from_uid(self, uid):
 
         if not self.connect():
-            log(module=__name__, function='get_dlgid_from_uid', msg='ERROR: can\'t connect bdspy !!')
+            log(module=__name__, function='BDSPY_get_dlgid_from_uid', msg='ERROR: can\'t connect bdspy !!')
             return False
 
         query = text("SELECT dlgid FROM spy_equipo WHERE uid = '{}'".format(uid))
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, function='get_dlgid_from_uid', msg='ERROR: can\'t exec bdspy !!')
-            log(module=__name__, function='get_dlgid_from_uid', msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, function='BDSPY_get_dlgid_from_uid', msg='ERROR: can\'t exec bdspy !!')
+            log(module=__name__, function='BDSPY_get_dlgid_from_uid', msg='ERROR: EXCEPTION {}'.format(err_var))
             return ''
 
         row = rp.first()
@@ -154,52 +154,110 @@ class BDSPY:
             return self.datasource
 
         if not self.connect():
-            log(module=__name__, server = self.server, function='find_data_source', dlgid=dlgid, msg='ERROR: can\'t connect bdspy !!')
+            log(module=__name__, server = self.server, function='BDSPY_find_data_source', dlgid=dlgid, msg='ERROR: can\'t connect bdspy !!')
             return
 
         query = text("SELECT datasource FROM spy_equipo WHERE dlgid = '{}'".format(dlgid))
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, server = self.server, function='find_data_source', dlgid=dlgid, msg='ERROR: can\'t exec bdspy !!')
-            log(module=__name__, server = self.server, function='find_data_source', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server = self.server, function='BDSPY_find_data_source', dlgid=dlgid, msg='ERROR: can\'t exec bdspy !!')
+            log(module=__name__, server = self.server, function='BDSPY_find_data_source', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
             return
 
         results = rp.fetchone()
         if results is None:
-            log(module=__name__, server = self.server, function='find_data_source', dlgid=dlgid, msg='ERROR: DS=None')
+            log(module=__name__, server = self.server, function='BDSPY_find_data_source', dlgid=dlgid, msg='ERROR: DS=None')
             return
 
         self.datasource = results[0]
-        log(module=__name__, server = self.server, function='find_data_source', dlgid=dlgid, msg='DS={}'.format(self.datasource))
+        log(module=__name__, server = self.server, function='BDSPY_find_data_source', dlgid=dlgid, msg='DS={}'.format(self.datasource))
 
         return self.datasource
 
 
     def reset_datasource(self, dlgid):
         self.datasource = ''
-        log(module=__name__, function='reset_datasource', level='SELECT', dlgid=dlgid, msg='start')
+        log(module=__name__, function='BDSPY_reset_datasource', level='SELECT', dlgid=dlgid, msg='start')
 
 
     def check_auth(self, dlgid, uid):
-        log(module=__name__, function='__init__', dlgid=dlgid, msg='start')
+        log(module=__name__, function='BDSPY___init__', dlgid=dlgid, msg='start')
         if not self.dlg_is_defined(dlgid):
            return False
         #El dlgid esta en la BD. Actualizo su UID
         return self.update_uid(dlgid, uid)
 
 
-    def update_uid(self, dlgid, uid):
+    def update_uid2(self, dlgid, uid):
+        #return True
 
         if not self.connect():
-            log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid, msg='ERROR: can\'t connect !!')
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='ERROR: can\'t connect !!')
             return False
 
-        log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='UID={}'.format(uid))
+        log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='UID={}'.format(uid))
 
         # Controlo integridad: UID <> 00000
         if uid == '00000':
-            log(module=__name__, server=self.server, function='update_uid', dlgid='DEBUG', msg='ERROR: dlgid={0}, uid={1}!!'.format(dlgid,uid))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid='DEBUG', msg='ERROR: dlgid={0}, uid={1}!!'.format(dlgid,uid))
+            return False
+
+        # PASS1: Borro todos los registros que tienen el uid dado
+        datasource = self.find_data_source(dlgid)
+        log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='DATASOURCE={}'.format(datasource))
+
+        sql = "1DELETE FROM spy_equipo WHERE uid='{0}' OR dlgid='{1}'".format(uid, dlgid)
+        log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid='DEFAULT', msg='DELETE SQLQUERY: {}'.format(sql))
+        query = ''
+        try:
+            query = text(sql)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            return False
+
+        try:
+            rp = self.conn.execute(query)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
+            return False
+
+        log(module=__name__, function='BDSPY_update_uid', dlgid='DEFAULT', msg='{0}: Borro todas UID OK!'.format(dlgid))
+
+        # PASS2: Creo un registro con el UID/DLGID
+        sql = "INSERT INTO spy_equipo (dlgid, uid, datasource) VALUES ('{0}','{1}','{2}')".format(dlgid,uid,datasource)
+        try:
+            query = text(sql)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: SQLQUERY: {}'.format(sql))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: EXCEPTION {}'.format(err_var))
+            return False
+
+        log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='Update UID query={}'.format(query))
+
+        try:
+            rp = self.conn.execute(query)
+            log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='Updated UID OK!')
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='ERROR: exec EXCEPTION {}'.format(err_var))
+            return False
+
+        log(module=__name__, server=self.server, function='BDSPY_update_uid', level='SELECT', dlgid=dlgid, msg='DEBUG update_uid OK')
+        return True
+
+
+    def update_uid(self, dlgid, uid):
+
+        if not self.connect():
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='ERROR: can\'t connect !!')
+            return False
+
+        log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='UID={}'.format(uid))
+
+        # Controlo integridad: UID <> 00000
+        if uid == '00000':
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid='DEBUG', msg='ERROR: dlgid={0}, uid={1}!!'.format(dlgid,uid))
             return False
 
         # PASS1: Pongo todos los UID que coincidan en ''
@@ -208,35 +266,35 @@ class BDSPY:
         try:
             query = text(sql)
         except Exception as err_var:
-            log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
-            log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
             return False
 
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
             return False
 
-        #log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='Borro todas UID OK!')
+        #log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='Borro todas UID OK!')
 
         # PASS2: Actualizo el UID.
         sql = "UPDATE spy_equipo SET uid='{0}' WHERE dlgid='{1}'".format(uid,dlgid)
         try:
             query = text(sql)
         except Exception as err_var:
-            log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
-            log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
             return False
 
-        #log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='Update UID query={}'.format(query))
+        log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='Update UID query={}'.format(query))
 
         try:
             rp = self.conn.execute(query)
-            log(module=__name__, function='update_uid', dlgid=self.dlgid, msg='Updated UID OK!')
+            log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='Updated UID OK!')
         except Exception as err_var:
-            log(module=__name__, server=self.server, function='update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
             return False
 
-        #log(module=__name__, server=self.server, function='update_uid', level='SELECT', dlgid=dlgid, msg='DEBUG update_uid OK')
+        #log(module=__name__, server=self.server, function='BDSPY_update_uid', level='SELECT', dlgid=dlgid, msg='DEBUG update_uid OK')
         return True

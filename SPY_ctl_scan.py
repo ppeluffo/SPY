@@ -56,13 +56,13 @@ class RAW_CTL_SCAN_frame:
         self.version = version
         self.payload_dict = payload_dict
         self.response_pload = ''
-        log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
+        log(module=__name__, function='scan__init__', dlgid=self.dlgid, msg='start')
         return
 
     def send_response(self):
         pload = 'CLASS:SCAN;{}'.format(self.response_pload)
         u_send_response('CTL', pload)
-        log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
+        log(module=__name__, function='scan_send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 
     def process(self):
@@ -74,26 +74,29 @@ class RAW_CTL_SCAN_frame:
            con el dlg asociado al uid.
         - Si no esta el dlgid ni el uid, ERROR
         '''
-        log(module=__name__, function='process', dlgid=self.dlgid, msg='start')
+        log(module=__name__, function='scan_process', dlgid=self.dlgid, msg='start')
 
         bd = BDSPY(Config['MODO']['modo'])
         uid = self.payload_dict.get('UID', 'ERROR')
         # Primero vemos que el dlgid este definido sin importar su uid
         if bd.dlg_is_defined(self.dlgid):
-            log(module=__name__, function='process', dlgid=self.dlgid, msg='SCAN OK')
+            log(module=__name__, function='scan_process', dlgid=self.dlgid, msg='SCAN OK')
             # Actualizo el uid c/vez que me conecto si el dlgid coincide
             bd.update_uid(self.dlgid, uid)
             self.response_pload = 'STATUS:OK'
             self.send_response()
+            return
+
         # Si no esta definido, busco si hay algun uid y a que dlgid corresponde
-        elif bd.uid_is_defined(uid):
+        if bd.uid_is_defined(uid):
             new_dlgid = bd.get_dlgid_from_uid(uid)
             self.response_pload = 'STATUS:RECONF;DLGID:{}'.format(new_dlgid)
-            log(module=__name__, function='process', dlgid=self.dlgid, msg='bdconf NEW_DLGID={}'.format(new_dlgid))
+            log(module=__name__, function='scan_process', dlgid=self.dlgid, msg='bdconf NEW_DLGID={}'.format(new_dlgid))
             self.send_response()
-        else:
-            self.response_pload = 'STATUS:UNDEF'
-            self.send_response()
-            log(module=__name__, function='process', dlgid=self.dlgid, msg='DLGID/UID not Defined !!')
+            return
 
+        # DEFAULT
+        self.response_pload = 'STATUS:UNDEF'
+        self.send_response()
+        log(module=__name__, function='scan_process', dlgid=self.dlgid, msg='DLGID/UID not Defined !!')
         return
