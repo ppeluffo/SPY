@@ -19,7 +19,7 @@ import signal
 from spy_config import Config
 from spy_utils import u_parse_string, u_format_fecha_hora, u_dataline_to_dict
 
-MAXPROCESS = 5
+MAXPROCESS = 50
 # -----------------------------------------------------------------------------
 #Config = configparser.ConfigParser()
 #Config.read('spy.conf')
@@ -119,7 +119,7 @@ def process_file(file):
         return
 
     else:
-        print('Im a child with pid {0} and FILE {1}'.format(os.getpid(), file))
+        #print('Im a child with pid {0} and FILE {1}'.format(os.getpid(), file))
         with open(file) as myfile:
             # El archivo trae una sola linea con varios frames enganchados.
             #     CTL:1;DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;CTL:2;DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:1

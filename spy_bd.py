@@ -36,8 +36,7 @@ class BD:
 
         if self.datasource == 'GDA':
             self.bdr = BDGDA(self.modo, server)
-        elif self.datasource == '' \
-                                '':
+        elif self.datasource == 'GDA_LA_TAHONA':
             self.bdr = BDGDA_TAHONA(self.modo, server)
         elif self.datasource == 'BDOSE_PQ':
             self.bdr = BDOSE_PQ(self.modo, server)

@@ -36,7 +36,6 @@ class INIT_CONF_AUTH:
         self.uid = uid
         return
 
-
     def __str__(self):
         response = 'CONF_AUTH: dlgid={0},uid={1}'.format( self.dlgid, self.uid)
         return response
@@ -45,9 +44,9 @@ class INIT_CONF_AUTH:
         '''
         El procesamiento consiste ver si en la BDSPY hay una entrada con el DLGID y el UID.
         '''
-        log(module=__name__, function='CONF_AUTH_process', level='SELECT', dlgid=self.dlgid, msg='dlgid={0},uid={1}'.format(self.dlgid,self.uid))
+        # log(module=__name__, function='CONF_AUTH_process', level='SELECT', dlgid=self.dlgid, msg='dlgid={0},uid={1}'.format(self.dlgid,self.uid))
+        log(module=__name__, function='CONF_AUTH_process', level='SELECT', dlgid='DEBUG', msg='dlgid={0},uid={1}'.format(self.dlgid, self.uid))
         bd = BDSPY(modo = Config['MODO']['modo'])
-
         if bd.dlg_is_defined(self.dlgid):
             '''
             Comprende los casos ( DLGID OK, UID OK ) y

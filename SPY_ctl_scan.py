@@ -78,6 +78,8 @@ class RAW_CTL_SCAN_frame:
 
         bd = BDSPY(Config['MODO']['modo'])
         uid = self.payload_dict.get('UID', 'ERROR')
+        log(module=__name__, function='scan_process', dlgid='DEBUG', msg='start: dlgid={0},uid={1}'.format(self.dlgid, uid))
+
         # Primero vemos que el dlgid este definido sin importar su uid
         if bd.dlg_is_defined(self.dlgid):
             log(module=__name__, function='scan_process', dlgid=self.dlgid, msg='SCAN OK')

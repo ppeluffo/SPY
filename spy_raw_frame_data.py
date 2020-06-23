@@ -182,7 +182,7 @@ class RAW_DATA_frame:
             if not self.bd.insert_data_online(self.dlgid,d):
                 return False
 
-            return True
+        return True
 
 
     def process(self):

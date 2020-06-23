@@ -71,6 +71,7 @@ class INIT_CONF_GLOBAL:
         log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='start')
 
         # Veo si esta autorizado y actualizo el uid
+        '''
         uid = self.payload_dict.get('UID', '0000')
         log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG dlgid={0},uid={1}'.format(self.dlgid, uid))
 
@@ -81,10 +82,8 @@ class INIT_CONF_GLOBAL:
                 self.response_pload += ':NOT_ALLOWED'
                 self.send_response()
                 return
-
-        '''
-        La configuracion del dlg de la base de datos ya fue leida en la clase superior RAW_INIT y se encuentra
-        en self.dlgbdconf_dict
+        # La configuracion del dlg de la base de datos ya fue leida en la clase superior RAW_INIT y se encuentra
+        # en self.dlgbdconf_dict
         '''
         # Parametros administrativos:
         #simpwd = self.payload_dict.get('SIMPWD', 'ERROR')
@@ -205,8 +204,10 @@ class INIT_CONF_GLOBAL:
 
         counters_hw = d.get(('BASE', 'HW_CONTADORES'), 'OPTO')
 
+        fw_ver = self.dlgbdconf_dict.get(('BASE', 'FIRMWARE'), '2.0.0a')
+        log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='DEBUG1:fw_ver={}'.format(fw_ver))
         fw_version = u_get_fw_version(self.dlgbdconf_dict)
-
+        log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='DEBUG2:fw_ver={}'.format(fw_version))
         # Calculo el checksum.
         # Debo hacerlo igual a como lo hago en el datalogger.
         cks_str = ''

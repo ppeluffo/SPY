@@ -101,6 +101,11 @@ def u_get_fw_version(d):
     de modo que pueda determinar numericamente la version en comparaciones
     '''
     fw_ver = d.get(('BASE', 'FIRMWARE'), '2.0.0a')
-    (rev_mayor, rev_media, rev_menor) = fw_ver.split('.')
-    version = int(rev_mayor)*100 + int(rev_media)*10 + int(rev_menor[0])
+    l=fw_ver.split('.')
+    if len(l) < 3:
+        l = [ '2','0','0']
+    rev_mayor = int(l[0])
+    rev_media = int(l[1])
+    rev_menor = int(l[2][0])
+    version = int(rev_mayor)*100 + int(rev_media)*10 + int(rev_menor)
     return version
