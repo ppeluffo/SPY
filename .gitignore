@@ -5,4 +5,8 @@ __pycache__
 tmp.txt
 tmpFiles
 uteFiles
+*.tgz
+*.dat
+*.pyc
+spy_process.20200612.py
 
