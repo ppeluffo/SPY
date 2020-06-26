@@ -1,10 +1,6 @@
-errFiles
-bkFiles
 .idea
 __pycache__
 tmp.txt
-tmpFiles
-uteFiles
 *.tgz
 *.dat
 *.pyc
