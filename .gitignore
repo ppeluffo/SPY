@@ -1,3 +1,7 @@
+bkFiles
+errFiles
+rxFiles
+uteFiles
 .idea
 __pycache__
 tmp.txt
