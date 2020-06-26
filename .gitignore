@@ -8,5 +8,6 @@ uteFiles
 *.tgz
 *.dat
 *.pyc
+*.tmp
 spy_process.20200612.py
 
