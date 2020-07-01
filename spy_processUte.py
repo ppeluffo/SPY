@@ -93,14 +93,14 @@ def process_line( line, dlgid, d_parsConf, bd ):
     Paso este diccionario a la BD para que la inserte.
     3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
     '''
-    log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='PROC00', console=console, msg='line={}'.format(line))
+    log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='UPROC00', console=console, msg='line={}'.format(line))
     line = 'CTL:{}'.format(line)
     line = line[:-1]
     line = line.rstrip('\n|\r|\t')
 
     d = u_parse_string( line, field_separator=';', key_separator=':')
-    #for key in d:
-    #    log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='PROC00',msg='key={0}, val={1}'.format(key, d[key]))
+    for key in d:
+        log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='UPROC00',msg='key={0}, val={1}'.format(key, d[key]))
 
     d['DLGID'] = dlgid
     d['timestamp'] = format_fecha_hora( d['DATE'], d['TIME'] )
@@ -113,6 +113,8 @@ def process_line( line, dlgid, d_parsConf, bd ):
     del d['DATE']
     del d['TIME']
     del d['CTL']
+
+    return True
 
     if not bd.insert_data_line(dlgid, d, d_parsConf, bd):
         return False
@@ -152,7 +154,7 @@ def process_file(file, d_parsConf, bd ):
                 if 'DATE' in line:
                     log(module=__name__, server='process', function='process_file', level='SELECT', dlgid='UPROC00', msg='line={}'.format(line))
                     if not process_line( line, dlgid, d_parsConf, bd ):
-                        #move_file_to_error_dir(file)
+                        move_file_to_error_dir(file)
                         return
 
     move_file_to_bkup_dir(file)
@@ -169,7 +171,8 @@ if __name__ == '__main__':
 
     # Leo los datos del directorio uteFiles.
     dirname = Config['PROCESS']['process_ute_path']
-    log(module=__name__, server='process', function='main', console=console, dlgid='UPROC00', msg='SERVER: dirname={}'.format(dirname))
+    print(dirname)
+    log(module=__name__, server='process', function='main', console=console, dlgid='UPROC00', msg='A-SERVER: dirname={}'.format(dirname))
     pid_list = list()
     #
     bd = DLGDB(modo='ute', server='process')
@@ -184,8 +187,9 @@ if __name__ == '__main__':
             file_list = glob.glob(dirname + '/*.dat')
             print ('File List: {}'.format(len(file_list)))
             for file in file_list:
+                print(file)
                 log(module=__name__, server='process', function='main', level='SELECT', dlgid='UPROC00', console=console,  msg='File {}'.format(file))
-                process_file(file, d_parsConf, bd )
+                #process_file(file, d_parsConf, bd )
 
             time.sleep(60)
 

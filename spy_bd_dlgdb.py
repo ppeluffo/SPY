@@ -26,8 +26,8 @@ class DLGDB:
         # elif modo == 'local':
         #     self.url = Config['BDATOS']['url_gda_local']
         # elif modo == 'ute':
-        import pymysql
-        pymysql.install_as_MySQLdb()        
+        #import pymysql
+        #pymysql.install_as_MySQLdb()        
         self.url = Config['BDATOS']['url_dlgdb_ute']
         return
 
@@ -58,6 +58,101 @@ class DLGDB:
             exit(1)
 
         return self.connected
+
+
+    def read_all_conf(self, dlgid, tag='DLGDB' ):
+        '''
+        Leo la configuracion desde DLGDB
+                +----------+---------------+------------------------+----------+
+                | canal    | parametro     | value                  | param_id |
+                +----------+---------------+------------------------+----------+
+                | BASE     | RESET         | 0                      |      899 |
+                | BASE     | UID           | 304632333433180f000500 |      899 |
+                | BASE     | TPOLL         | 60                     |      899 |
+                | BASE     | COMMITED_CONF |                        |      899 |
+                | BASE     | IMEI          | 860585004331632        |      899 |
+
+                EL diccionario lo manejo con 2 claves para poder usar el metodo get y tener
+                un valor por default en caso de que no tenga alguna clave
+        '''
+        log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, level='SELECT', msg='start_{}'.format(tag))
+
+        if not self.connect(tag):
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
+            return
+
+        sql = "SELECT dlgid, magName, tbMCol, disp FROM tbDlgParserConf"
+        try:
+            query = text(sql)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
+            return False
+
+        try:
+            rp = self.conn.execute(query)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+            return False
+
+        results = rp.fetchall()
+        d = defaultdict(dict)
+        for row in results:
+            id, mag_name, tbm_col, disp = row
+            if id not in d.keys():
+                d[id] = {}
+            if mag_name not in d[id].keys():
+                d[id][mag_name] = {}
+            d[id][mag_name]['TBMCOL'] = tbm_col
+            d[id][mag_name]['DISP'] = disp
+            #log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, level='SELECT', msg='BD_{0} conf: [{1}][{2}][{3}][{4}]'.format( tag, id, mag_name, tbm_col, disp))
+
+        return d
+
+
+    def read_dlg_conf(self, dlgid, tag='DLGDB'):
+        '''
+        Leo la configuracion desde DLGDB
+                +----------+---------------+------------------------+----------+
+                | canal    | parametro     | value                  | param_id |
+                +----------+---------------+------------------------+----------+
+                | BASE     | RESET         | 0                      |      899 |
+                | BASE     | UID           | 304632333433180f000500 |      899 |
+                | BASE     | TPOLL         | 60                     |      899 |
+                | BASE     | COMMITED_CONF |                        |      899 |
+                | BASE     | IMEI          | 860585004331632        |      899 |
+
+                EL diccionario lo manejo con 2 claves para poder usar el metodo get y tener
+                un valor por default en caso de que no tenga alguna clave
+        '''
+        log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, level='SELECT', msg='start_{}'.format(tag))
+
+        if not self.connect(tag):
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
+            return
+
+        sql = "SELECT magName, tbMCol, disp FROM tbDlgParserConf WHERE dlgId = '{}'".format (dlgid)
+        try:
+            query = text(sql)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
+            return False
+
+        try:
+            rp = self.conn.execute(query)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+            return False
+
+        results = rp.fetchall()
+        d = defaultdict(dict)
+        for row in results:
+            mag_name, tbm_col, disp = row
+            d[mag_name] = ( tbm_col, disp,)
+            log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, level='SELECT', msg='BD_{0} conf: [{1}][{2}][{3}]'.format( tag, mag_name, tbm_col, disp))
+
+        return d
 
 
     def insert_data_line(self,dlgid, d, d_parsConf, bd, tag='DLGDB'):
@@ -152,7 +247,13 @@ class DLGDB:
 
         try:
             rp = self.conn.execute(query)
-            rp = self.conn.execute(text("DELETE FROM tbMainOnline WHERE fechaHoraData < (SELECT MAX(fechaHoraData) FROM tbMainOnline WHERE dlgid = '{0}' ) AND dlgid = '{0}'".format(dlgid)))
+            rp = self.conn.execute(text("""
+            DELETE A FROM 
+                tbMainOnline AS A 
+                JOIN (SELECT MAX(tbMainOnline.fechaHoraData) AS max_date FROM tbMainOnline WHERE tbMainOnline.dlgid = '{0}') AS B
+            WHERE 
+                A.fechaHoraData < B.max_date AND dlgid = '{0}'
+            """.format(dlgid)))
         except Exception as err_var:
             if 'Duplicate entry' in str(err_var):
                 # Los duplicados no hacen nada malo. Se da mucho en testing.
