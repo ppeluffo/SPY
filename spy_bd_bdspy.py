@@ -30,7 +30,7 @@ class BDSPY:
         elif modo == 'local':
             self.url = Config['BDATOS']['url_bdspy_local']
         elif modo == 'ute':
-            self.url = Config['BDATOS']['url_bdpsy_ute']
+            self.url = Config['BDATOS']['url_bdspy_ute']
 
         log(module=__name__, function='BDSPY__init__', dlgid=self.dlgid, msg='start')
         return

@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -u
+#!/usr/local/bin/python3.6
 # -*- coding: utf-8 -*-
 """
 Created on Tue Aug 13 19:55:43 2019
@@ -23,11 +23,13 @@ import psutil
 import signal
 from spy_config import Config
 from spy_utils import u_parse_string
+import configparser
+import shutil
 
-MAXPROCESS = 10
+MAXPROCESS = 30
 # -----------------------------------------------------------------------------
-#Config = configparser.ConfigParser()
-#Config.read('spy.conf')
+# Config = configparser.ConfigParser()
+# Config.read('config/spy_processUte.conf')
 #
 console = ast.literal_eval( Config['MODO']['consola'] )
 #-----------------------------------------------------------------------------
@@ -52,7 +54,8 @@ def move_file_to_error_dir(file):
         errdirname = Config['PROCESS']['process_err_path']
         errfile = os.path.join(errdirname, filename)
         log(module=__name__, server='process', function='move_file_to_error_dir', level='SELECT', dlgid='PROC00', console=console, msg='errfile={}'.format(errfile))
-        os.rename(file, errfile)
+        # os.rename(file, errfile)
+        shutil.move(file, errfile)
     except Exception as err_var:
         log(module=__name__, server='process', function='move_file_to_error_dir', console=console, dlgid='PROC00', msg='ERROR: [{0}] no puedo pasar a err [{1}]'.format(file, err_var))
         log(module=__name__, server='process', function='move_file_to_error_dir', dlgid='PROC00', msg='ERROR: EXCEPTION {}'.format(err_var))
@@ -65,8 +68,10 @@ def move_file_to_bkup_dir(file):
     try:
         bkdirname = Config['PROCESS']['process_bk_path']
         bkfile = os.path.join(bkdirname, filename)
+        print(str(bkfile))
         log(module=__name__, server='process', function='move_file_to_bkup_dir', level='SELECT', dlgid='PROC00', console=console, msg='bkfile={}'.format(bkfile))
-        os.rename(file, bkfile)
+        # os.rename(file, bkfile)
+        shutil.move(file, bkfile)
     except Exception as err_var:
         log(module=__name__, server='process', function='move_file_to_bkup_dir', console=console, dlgid='PROC00', msg='ERROR: [{0}] no puedo pasar a bk [{1}]'.format(file, err_var))
         log(module=__name__, server='process', function='move_file_to_bkup_dir', dlgid='PROC00', msg='ERROR: EXCEPTION {}'.format(err_var))
@@ -93,14 +98,14 @@ def process_line( line, dlgid, d_parsConf, bd ):
     Paso este diccionario a la BD para que la inserte.
     3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
     '''
-    log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='UPROC00', console=console, msg='line={}'.format(line))
+    log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='PROC00', console=console, msg='line={}'.format(line))
     line = 'CTL:{}'.format(line)
     line = line[:-1]
     line = line.rstrip('\n|\r|\t')
 
     d = u_parse_string( line, field_separator=';', key_separator=':')
-    for key in d:
-        log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='UPROC00',msg='key={0}, val={1}'.format(key, d[key]))
+    #for key in d:
+    #    log(module=__name__, server='process', function='process_line', level='SELECT', dlgid='PROC00',msg='key={0}, val={1}'.format(key, d[key]))
 
     d['DLGID'] = dlgid
     d['timestamp'] = format_fecha_hora( d['DATE'], d['TIME'] )
@@ -114,11 +119,10 @@ def process_line( line, dlgid, d_parsConf, bd ):
     del d['TIME']
     del d['CTL']
 
-    return True
-
     if not bd.insert_data_line(dlgid, d, d_parsConf, bd):
+        print('bd.insert_data_line: False')
         return False
-
+    print('bd.insert_data_line: True')
     return True
 
 
@@ -171,8 +175,7 @@ if __name__ == '__main__':
 
     # Leo los datos del directorio uteFiles.
     dirname = Config['PROCESS']['process_ute_path']
-    print(dirname)
-    log(module=__name__, server='process', function='main', console=console, dlgid='UPROC00', msg='A-SERVER: dirname={}'.format(dirname))
+    log(module=__name__, server='process', function='main', console=console, dlgid='UPROC00', msg='SERVER: dirname={}'.format(dirname))
     pid_list = list()
     #
     bd = DLGDB(modo='ute', server='process')
@@ -187,9 +190,8 @@ if __name__ == '__main__':
             file_list = glob.glob(dirname + '/*.dat')
             print ('File List: {}'.format(len(file_list)))
             for file in file_list:
-                print(file)
                 log(module=__name__, server='process', function='main', level='SELECT', dlgid='UPROC00', console=console,  msg='File {}'.format(file))
-                #process_file(file, d_parsConf, bd )
+                process_file(file, d_parsConf, bd )
 
             time.sleep(60)
 
@@ -199,6 +201,7 @@ if __name__ == '__main__':
         d_parsConf = bd.read_all_conf(dlgid='UPROC00', tag='DLGDB')
         # Leo la lista de archivos pendientes de ser procesados
         file_list = glob.glob(dirname + '/*.dat')
+        print('files: '+str(len(file_list)) )
         for file in file_list:
             # Mientras halla lugar en la lista, proceso archivos
             if len(pid_list) < MAXPROCESS:

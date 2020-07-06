@@ -20,14 +20,7 @@ class DLGDB:
         self.conn = ''
         self.connected = False
         self.server = server
-
-        # if modo == 'spymovil':
-        #     self.url = Config['BDATOS']['url_gda_spymovil']
-        # elif modo == 'local':
-        #     self.url = Config['BDATOS']['url_gda_local']
-        # elif modo == 'ute':
-        #import pymysql
-        #pymysql.install_as_MySQLdb()        
+    
         self.url = Config['BDATOS']['url_dlgdb_ute']
         return
 
@@ -171,18 +164,6 @@ class DLGDB:
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{}: can\'t connect!!'.format(tag))
             exit(0)
 
-        '''
-        d_q = dict()   
-        # Recorro las claves del diccionario con los datos.
-        for key in d.keys():
-            # Si la clave (pA) tiene una entrada en parsConf
-            if key in d_parsConf[dlgid].keys():
-                # Voy creando un diccionario con la clave, valor, tbcol, disp.
-                d_q[key] = {}
-                d_q[key]['VALUE'] = d[key]
-                d_q[key]['TBMCOL'] = d_parsConf[dlgid][key]['TBMCOL']
-                d_q[key]['DISP'] = d_parsConf[dlgid][key]['DISP']
-        '''
         data = list()
         for key in d.keys():
             # Si la clave (pA) tiene una entrada en parsConf

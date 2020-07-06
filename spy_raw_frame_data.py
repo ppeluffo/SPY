@@ -9,6 +9,8 @@ from spy_utils import u_send_response, u_dataline_to_dict
 from spy_bd_redis import Redis
 from spy_bd_gda import BDGDA
 from spy_process import move_file_to_error_dir
+from spy_raw_frame_data_daemon import insert_GDA_process_daemon
+import signal
 
 # ------------------------------------------------------------------------------
 class RAW_DATA_frame:
@@ -184,10 +186,8 @@ class RAW_DATA_frame:
 
         return True
 
-
     def process(self):
         # Realizo todos los pasos necesarios en el payload paragenerar la respuesta al datalooger e insertar los datos en GDA
-
         log(module=__name__, function='process', dlgid=self.dlgid, msg='START')
 
         # Paso 1: Guardo los datos en un archivo temporal para que luego lo procese el 'process'
@@ -215,14 +215,18 @@ class RAW_DATA_frame:
         # Si el commited conf indica reset lo agrego a la respuesta
         self.process_commited_conf()
         self.send_response()
-
+        
         # Paso 6: Inserto las lineas en GDA.
-        if self.process_and_insert_lines_into_GDA():
-            # Si salio bien renombro el archivo a .dat para que el process lo use
-            os.rename(tmp_file, dat_file)
-        else:
-            # Algo anduvo mal y no pude insertarlo en GDA
-            move_file_to_error_dir(tmp_file)
+        # if self.process_and_insert_lines_into_GDA():
+        #     # Si salio bien renombro el archivo a .dat para que el process lo use
+        #     os.rename(tmp_file, dat_file)
+        # else:
+        #     # Algo anduvo mal y no pude insertarlo en GDA
+        #     move_file_to_error_dir(tmp_file)
 
+        root_path = os.path.abspath('') # Obtengo la carpeta actual para que el demonio no se pierda. 
+        insert_GDA_process_daemon(self, tmp_file, dat_file, root_path)
+
+        
         return
 
