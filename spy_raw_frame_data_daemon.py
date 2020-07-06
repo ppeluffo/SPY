@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.6
+#!/usr/bin/python3 -u
 
 from spy_log import log
 import os
