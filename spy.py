@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.6
+#!/usr/bin/python3 -u
 """
 Version 1.0 @ 2019-07-19
 
