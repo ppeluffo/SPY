@@ -197,19 +197,21 @@ class DLGDB:
         sql_main += ')'
         sql_online += ')'
 
-        print("SQL_MAIN=[{}]".format(sql_main))
-        print("SQL_ONLINE=[{}]".format(sql_online))
-        #return True
+        # print("SQL_MAIN=[{}]".format(sql_main))
+        # print("SQL_ONLINE=[{}]".format(sql_online))
+        # return True
 
         errors = 0
 
         # main
+        self.connect()
         try:
             query = text(sql_main)
         except Exception as err_var:
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_main))
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
-        print(query)
+        # print(query)
+
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
@@ -226,6 +228,7 @@ class DLGDB:
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_online))
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
 
+        self.connect()
         try:
             rp = self.conn.execute(query)
             rp = self.conn.execute(text("""
