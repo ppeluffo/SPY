@@ -8,6 +8,7 @@ from sqlalchemy import text
 from spy import Config
 from collections import defaultdict
 from spy_log import log
+from time import sleep
 
 # ------------------------------------------------------------------------------
 class DLGDB:
@@ -222,9 +223,10 @@ class DLGDB:
                     # Los duplicados no hacen nada malo. Se da mucho en testing.
                     log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
                 else:
-                    log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+                    sleep(1)
                     tr = tr - 1
-            
+                    if tr == 0:
+                        log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
         # online
         try:
             query = text(sql_online)
