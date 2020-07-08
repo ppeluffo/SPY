@@ -221,6 +221,7 @@ class DLGDB:
             except Exception as err_var:
                 if 'Duplicate entry' in str(err_var):
                     # Los duplicados no hacen nada malo. Se da mucho en testing.
+                    tr = 0
                     log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
                 else:
                     sleep(1)
