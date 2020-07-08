@@ -215,7 +215,11 @@ class DLGDB:
         tr = 3
         while tr > 0:
             try:
-                self.connect()
+                if not self.connect():
+                    log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{}: can\'t connect!!'.format(tag))
+                    tr = tr - 1
+                    sleep(1)
+                    continue
                 rp = self.conn.execute(query)
                 tr = 0
             except Exception as err_var:
@@ -235,27 +239,62 @@ class DLGDB:
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_online))
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
 
-        self.connect()
-        try:
-            rp = self.conn.execute(query)
-            rp = self.conn.execute(text("""
-            DELETE A FROM 
-                tbMainOnline AS A 
-                JOIN (SELECT MAX(tbMainOnline.fechaHoraData) AS max_date FROM tbMainOnline WHERE tbMainOnline.dlgid = '{0}') AS B
-            WHERE 
-                A.fechaHoraData < B.max_date AND dlgid = '{0}'
-            """.format(dlgid)))
-        except Exception as err_var:
-            if 'Duplicate entry' in str(err_var):
-                # Los duplicados no hacen nada malo. Se da mucho en testing.
-                log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
-            else:
-                log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+        tr = 3
+        while tr > 0:
+            try:
+                if not self.connect():
+                    log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{}: can\'t connect!!'.format(tag))
+                    tr = tr - 1
+                    sleep(1)
+                    continue
+                rp = self.conn.execute(query)
+                tr = 0
+            except Exception as err_var:
+                if 'Duplicate entry' in str(err_var):
+                    # Los duplicados no hacen nada malo. Se da mucho en testing.
+                    log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
+                    tr = 0
+                else:
+                    sleep(1)
+                    tr = tr - 1
+                    if tr == 0:                    
+                        log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
 
         if errors > 0:
             return False
         else:
             return True
+
+    def clear_online(self,dlgid, bd):
+        '''
+        Deja el registro mas nuevo en la tabla tbMainOnline para el dlgId determinado.
+
+        '''
+        tr = 3
+        while tr > 0:
+            try:
+                if not self.connect():
+                    log(module=__name__, server=self.server, function='clear_online', dlgid=dlgid, msg='ERROR_{}: can\'t connect!!'.format(tag))
+                    tr = tr - 1
+                    sleep(1)
+                    continue         
+                rp = self.conn.execute(text("""
+                DELETE A FROM 
+                    tbMainOnline AS A 
+                    JOIN (SELECT MAX(tbMainOnline.fechaHoraData) AS max_date FROM tbMainOnline WHERE tbMainOnline.dlgid = '{0}') AS B
+                WHERE 
+                    A.fechaHoraData < B.max_date AND dlgid = '{0}'
+                """.format(dlgid)))
+                tr = 0
+            except Exception as err_var:
+                sleep(1)
+                tr = tr - 1
+                if tr == 0:                 
+                    log(module=__name__, server=self.server, function='clear_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+                    return False
+
+        return True
+
 
 
 if __name__ == '__main__':

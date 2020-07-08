@@ -154,11 +154,14 @@ def process_file(file, d_parsConf, bd ):
             for line in lines_list:
                 # Elimino las lineas vacias generadas por el parseo
                 if 'DATE' in line:
-                    log(module=__name__, server='process', function='process_file', level='SELECT', dlgid='UPROC00', msg='line={}'.format(line))
+                    log(module=__name__, server='process', function='process_file', level='SELECT', dlgid=str(dlgid), msg='line={}'.format(line))
                     if not process_line( line, dlgid, d_parsConf, bd ):
                         move_file_to_error_dir(file)
                         return
-
+            log(module=__name__, server='process', function='process_file', level='SELECT', dlgid=str(dlgid), msg='clear online')            
+            if not bd.clear_online(dlgid, bd):
+                log(module=__name__, server='process', function='process_file', level='SELECT', dlgid=str(dlgid), msg='clear online - ERROR')
+                  
     move_file_to_bkup_dir(file)
 
     return
