@@ -270,6 +270,7 @@ class DLGDB:
         Deja el registro mas nuevo en la tabla tbMainOnline para el dlgId determinado.
 
         '''
+        tag='DLGDB'
         tr = 3
         while tr > 0:
             try:
