@@ -34,7 +34,7 @@ class DLGDB:
             return self.connected
 
         try:
-            self.engine = create_engine(self.url)
+            self.engine = create_engine(self.url, pool_size=5, pool_recycle=3600)
         except Exception as err_var:
             self.connected = False
             log(module=__name__, server=self.server, function='connect', msg='ERROR_{}: engine NOT created. ABORT !!'.format(tag))
