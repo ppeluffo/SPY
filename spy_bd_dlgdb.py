@@ -204,7 +204,6 @@ class DLGDB:
         errors = 0
 
         # main
-        self.connect()
         try:
             query = text(sql_main)
         except Exception as err_var:
@@ -212,15 +211,20 @@ class DLGDB:
             log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
         # print(query)
 
-        try:
-            rp = self.conn.execute(query)
-        except Exception as err_var:
-            if 'Duplicate entry' in str(err_var):
-                # Los duplicados no hacen nada malo. Se da mucho en testing.
-                log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
-            else:
-                log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-
+        tr = 3
+        while tr > 0:
+            try:
+                self.connect()
+                rp = self.conn.execute(query)
+                tr = 0
+            except Exception as err_var:
+                if 'Duplicate entry' in str(err_var):
+                    # Los duplicados no hacen nada malo. Se da mucho en testing.
+                    log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
+                else:
+                    log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+                    tr = tr - 1
+            
         # online
         try:
             query = text(sql_online)
