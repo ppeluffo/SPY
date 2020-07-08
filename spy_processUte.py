@@ -23,7 +23,6 @@ import psutil
 import signal
 from spy_config import Config
 from spy_utils import u_parse_string
-import configparser
 import shutil
 
 MAXPROCESS = 30
@@ -120,9 +119,8 @@ def process_line( line, dlgid, d_parsConf, bd ):
     del d['CTL']
 
     if not bd.insert_data_line(dlgid, d, d_parsConf, bd):
-        print('bd.insert_data_line: False')
         return False
-    print('bd.insert_data_line: True')
+
     return True
 
 
@@ -201,7 +199,7 @@ if __name__ == '__main__':
         d_parsConf = bd.read_all_conf(dlgid='UPROC00', tag='DLGDB')
         # Leo la lista de archivos pendientes de ser procesados
         file_list = glob.glob(dirname + '/*.dat')
-        print('files: '+str(len(file_list)) )
+        # print('files: '+str(len(file_list)) )
         for file in file_list:
             # Mientras halla lugar en la lista, proceso archivos
             if len(pid_list) < MAXPROCESS:
