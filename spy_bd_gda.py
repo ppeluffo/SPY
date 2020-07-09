@@ -36,7 +36,7 @@ class BDGDA:
         Retorna True/False si es posible generar una conexion a la bd GDA
         """
         if self.connected:
-            return self.connected.dispose()
+            return self.connected
 
         try:
             self.engine = create_engine(self.url, pool_recycle=3600, pool_size = 5)

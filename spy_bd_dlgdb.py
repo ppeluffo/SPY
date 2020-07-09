@@ -32,7 +32,7 @@ class DLGDB:
         """
 
         if self.connected:
-            return self.connected.dispose()
+            return self.connected
 
         try:
             self.engine = create_engine(self.url, pool_size=5, pool_recycle=3600)
