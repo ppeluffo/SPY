@@ -32,7 +32,7 @@ class DLGDB:
         """
 
         if self.connected:
-            return self.connected
+            return self.connected.dispose()
 
         try:
             self.engine = create_engine(self.url, pool_size=5, pool_recycle=3600)
@@ -272,6 +272,7 @@ class DLGDB:
         '''
         tag='DLGDB'
         tr = 3
+        query = text("""DELETE A FROM tbMainOnline AS A JOIN (SELECT MAX(tbMainOnline.fechaHoraData) AS max_date FROM tbMainOnline WHERE tbMainOnline.dlgid = '{0}') AS B WHERE A.fechaHoraData < B.max_date AND dlgid = '{0}'""".format(dlgid))
         while tr > 0:
             try:
                 if not self.connect():
@@ -279,13 +280,7 @@ class DLGDB:
                     tr = tr - 1
                     sleep(1)
                     continue         
-                rp = self.conn.execute(text("""
-                DELETE A FROM 
-                    tbMainOnline AS A 
-                    JOIN (SELECT MAX(tbMainOnline.fechaHoraData) AS max_date FROM tbMainOnline WHERE tbMainOnline.dlgid = '{0}') AS B
-                WHERE 
-                    A.fechaHoraData < B.max_date AND dlgid = '{0}'
-                """.format(dlgid)))
+                rp = self.conn.execute(query)
                 tr = 0
             except Exception as err_var:
                 sleep(1)
