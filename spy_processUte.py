@@ -124,7 +124,7 @@ def process_line( line, dlgid, d_parsConf, bd ):
     return True
 
 
-def process_file(file, d_parsConf, bd ):
+def process_file(file, d_parsConf, bd=None ):
     '''
     Recibo el nombre de un archivo el cual abro y voy leyendo c/linea
     y procesandola
@@ -136,6 +136,7 @@ def process_file(file, d_parsConf, bd ):
     CTL:1;DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;CTL:2;DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:1
     2.33;CTL:3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
     '''
+    bd = DLGDB(modo='ute', server='process')
     dirname, filename = os.path.split(file)
     log(module=__name__, server='process', function='process_file', level='SELECT', dlgid='UPROC00', msg='file={}'.format(filename))
     dlgid, *res = re.split('_', filename)
