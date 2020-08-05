@@ -13,44 +13,6 @@ import daemon
 import shutil
 
 
-def process_callbacks(dlgid):
-    
-    log(module=__name__, function='process_callbacks', dlgid=dlgid, msg='CALLBACK ==> START')
-    
-    def run_program():
-        os.system('{0} {1}'.format(CBK,dlgid))
-        
-    def end_time(process,time):
-        from multiprocessing import Process
-        p = Process(target=process,args ='')
-        p.start()
-        p.join(time)
-        if p.is_alive():
-            p.terminate()
-            log(module=__name__, function='process_callbacks', dlgid=dlgid, msg='CALLBACKS ==> EJECUCION INTERRUMPIDA POR TIMEOUT')
-            
-    # PREPARO ARGUMENTOS
-    try:
-        PATH = Config['CALLBACKS_PATH']['cbk_path']
-        PROGRAM = Config['CALLBACKS_PROGRAM']['cbk_program']
-        CBK = os.path.join(PATH, PROGRAM)
-        #
-        log(module=__name__, function='process_callbacks', dlgid=dlgid, msg='CALL_BACKS ==> {0} {1}]'.format(CBK,dlgid))
-        # EJECUTO CALLBACKS SI LAS VARIABLES PATH y PROGRAM TIENEN VALORES COHERENTES
-        if bool(PROGRAM) & bool(PATH):
-            # EJECUTO EL CALLBACKS CON TIEMPO MAXIMO DE EJECUCION DE 1 s
-            end_time(run_program,1)
-        else: 
-            log(module=__name__, function='process_callbacks', dlgid=dlgid, msg='CALLBACKS ==> [PATH = {0}],[PROGRAM = {1}'.format(PATH,PROGRAM))
-            log(module=__name__, function='process_callbacks', dlgid=dlgid, msg='CALLBACKS ==> INTERRUMPIDO')
-    
-    except:
-        log(module=__name__, function='process_callbacks', dlgid=dlgid, msg='CALLBACKS ==> ERROR A LEER cbk vars de spy.conf')
-
-    log(module=__name__, function='process', dlgid=dlgid, msg='CALLBACK ==> END')
-
-    return
-
 def process_and_insert_lines_into_GDA(dlgid, data_line_list):
     # self.data_line_list = [ DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
     #                         DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
@@ -77,21 +39,6 @@ def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):
 
     with daemon.DaemonContext(): 
         log(module=__name__, function='process', dlgid=dlgid, msg='Start Daemon')
-
-        ## Callbacks 
-        
-        # Paso 3: Actualizo la REDIS con la ultima linea
-        redis_db = Redis(dlgid)
-        # Guardo la ultima linea en la redis
-        redis_db.insert_line(data_line_list[-1])
-
-        # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
-        log(module=__name__, function='process', dlgid=dlgid, msg='CALL_BACKS')
-        try: 
-            if redis_db.execute_callback(): process_callbacks(dlgid)
-        except Exception as e: 
-            log(module=__name__, function='process', dlgid=dlgid, msg='ERROR CALL_BACKS '+str(e))
-        ## 
 
         # Paso 6: Inserto las lineas en GDA.
         if process_and_insert_lines_into_GDA(dlgid, data_line_list):
