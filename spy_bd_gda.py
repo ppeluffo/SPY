@@ -180,7 +180,7 @@ class BDGDA:
 
         # PASS1: Inserto frame en la tabla de INITS.
         query = ''
-        sql = """INSERT IGNORE INTO spx_inits (fecha,dlgid_id,csq,rxframe) VALUES ( NOW(), \
+        sql = """INSERT INTO spx_inits (fecha,dlgid_id,csq,rxframe) VALUES ( NOW(), \
                      ( SELECT id FROM spx_unidades WHERE dlgid = '{0}'), '{1}', '{2}')""" .format(dlgid, d['CSQ'], d['RCVDLINE'])
         try:
             query = text(sql)
@@ -192,7 +192,7 @@ class BDGDA:
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-             if 'Duplicate entry' in str(err_var):
+             if 'duplicate'.lower() in (str(err_var)).lower():
                 # Los duplicados no hacen nada malo. Se da mucho en testing.
                 log(module=__name__, server=self.server, function='update', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
              else:
@@ -215,7 +215,7 @@ class BDGDA:
             try:
                 rp = self.conn.execute(query)
             except Exception as err_var:
-                if 'Duplicate entry' in str(err_var):
+                if 'duplicate'.lower() in (str(err_var)).lower():
                     # Los duplicados no hacen nada malo. Se da mucho en testing.
                     log(module=__name__, server=self.server, function='update', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
                 else:
@@ -319,7 +319,7 @@ class BDGDA:
             try:
                 rp = self.conn.execute(query)
             except Exception as err_var:
-                if 'Duplicate entry' in str(err_var):
+                if 'duplicate'.lower() in (str(err_var)).lower():
                     # Los duplicados no hacen nada malo. Se da mucho en testing.
                     log(module=__name__, server=self.server, function='insert_data_line', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
                     continue
@@ -364,7 +364,7 @@ class BDGDA:
             try:
                 rp = self.conn.execute(query)
             except Exception as err_var:
-                if 'Duplicate entry' in str(err_var):
+                if 'duplicate'.lower() in (str(err_var)).lower():
                     log(module=__name__, server=self.server, function='insert_data_online', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
                     errors += 1
                 else:
