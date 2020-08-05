@@ -81,7 +81,7 @@ def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):
         ## Callbacks 
         
         # Paso 3: Actualizo la REDIS con la ultima linea
-        redis_db = Redis(self.dlgid)
+        redis_db = Redis(dlgid)
         # Guardo la ultima linea en la redis
         redis_db.insert_line(data_line_list[-1])
 
