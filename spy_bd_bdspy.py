@@ -277,5 +277,23 @@ class BDSPY:
             log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
             return False
 
+        # Borro las otras entradas que tengan el mismo uid
+        sql = "DELETE FROM spy_equipo WHERE uid = '{0}' AND dlgid != '{1}'".format(uid,dlgid)
+        try:
+            query = text(sql)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,  msg='ERROR: SQLQUERY: {}'.format( sql))
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            return False
+
+        log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='Delete UIDs query={}'.format(query))
+
+        try:
+            rp = self.conn.execute(query)
+            log(module=__name__, function='BDSPY_update_uid', dlgid=self.dlgid, msg='Deltete others UID lines OK!')
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
+            return False
+
         # log(module=__name__, server=self.server, function='BDSPY_update_uid', level='SELECT', dlgid=dlgid, msg='DEBUG update_uid OK')
         return True
