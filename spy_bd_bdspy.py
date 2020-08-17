@@ -207,7 +207,7 @@ class BDSPY:
         datasource = self.find_data_source(dlgid)
         log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid, msg='DATASOURCE={}'.format(datasource))
 
-        sql = "1DELETE FROM spy_equipo WHERE uid='{0}' OR dlgid='{1}'".format(uid, dlgid)
+        sql = "DELETE FROM spy_equipo WHERE uid='{0}' OR dlgid='{1}'".format(uid, dlgid)
         log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid='DEFAULT', msg='DELETE SQLQUERY: {}'.format(sql))
         query = ''
         try:
@@ -277,8 +277,8 @@ class BDSPY:
             log(module=__name__, server=self.server, function='BDSPY_update_uid', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format(err_var))
             return False
 
-        # Borro las otras entradas que tengan el mismo uid
-        sql = "DELETE FROM spy_equipo WHERE uid = '{0}' AND dlgid != '{1}'".format(uid,dlgid)
+        # Dejo vacio las otras entradas que tengan el mismo uid
+        sql = "UPDATE spy_equipo SET uid = '' WHERE uid = '{0}' AND dlgid != '{1}'".format(uid,dlgid)
         try:
             query = text(sql)
         except Exception as err_var:
