@@ -68,6 +68,7 @@ def print_error():
     print('USO: ./spy.py ')
     print('''
      DEBUG_CONF_AUTH
+     DEBUG_CONF_UPDATE
      DEBUG_CONF_GLOBAL     
      DEBUG_CONF_BASE
      DEBUG_CONF_ANALOG
@@ -111,6 +112,12 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'DEBUG_CONF_AUTH':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_conf_auth']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string [{0}]'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_UPDATE':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_update']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string [{0}]'.format(query_string))
 

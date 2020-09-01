@@ -204,6 +204,9 @@ class INIT_CONF_GLOBAL:
 
         counters_hw = d.get(('BASE', 'HW_CONTADORES'), 'OPTO')
 
+        # A partir de la version 3.0.4 manda si reporta o no la bateria( siempre en 5CH, configurable en 8CH)
+        bateria = d.get(('BASE', 'BAT'), 'OFF')
+
         fw_ver = self.dlgbdconf_dict.get(('BASE', 'FIRMWARE'), '2.0.0a')
         log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='DEBUG1:fw_ver={}'.format(fw_ver))
         fw_version = u_get_fw_version(self.dlgbdconf_dict)
@@ -211,7 +214,11 @@ class INIT_CONF_GLOBAL:
         # Calculo el checksum.
         # Debo hacerlo igual a como lo hago en el datalogger.
         cks_str = ''
-        if fw_version >= 300:
+
+        if fw_version >= 304:
+            cks_str = '{0},{1},{2},{3},{4},{5},{6},{7},'.format(timerdial, timerpoll, timepwrsensor, pwrs_modo, pwrs_start,  pwrs_end, counters_hw, bateria)
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        elif fw_version >= 300:
             cks_str = '{0},{1},{2},{3},{4},{5},{6},'.format(timerdial, timerpoll, timepwrsensor, pwrs_modo, pwrs_start,  pwrs_end, counters_hw)
             cks = self.PV_calcular_hash_checksum(cks_str)
         elif fw_version >= 299:

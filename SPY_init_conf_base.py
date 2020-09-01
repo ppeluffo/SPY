@@ -35,6 +35,7 @@ class INIT_CONF_BASE:
         self.timerpoll = int( dconf.get(('BASE', 'TPOLL'), 0))
         self.timerdial = int( dconf.get(('BASE', 'TDIAL'), 0))
         self.timepwrsensor = int( dconf.get(('BASE', 'TIMEPWRSENSOR'), 1))
+        self.reporta_bateria = dconf.get(('BASE', 'BAT'), 'OFF')
 
         self.pwrs_modo = int( dconf.get(('BASE', 'PWRS_MODO'), 0))  # En la BD se almacena 0(off) o 1 (on). Convierto !!!
         if self.pwrs_modo == 0:
@@ -47,7 +48,7 @@ class INIT_CONF_BASE:
 
         self.counters_hw = dconf.get(('BASE', 'HW_CONTADORES'),'OPTO')
 
-        self.response = "TDIAL:{0};TPOLL:{1};PWST:{2};PWRS:{3},{4},{5};HW_CNT:{6}".format(self.timerdial,self.timerpoll,self.timepwrsensor,self.pwrs_modo, self.pwrs_start, self.pwrs_end, self.counters_hw )
+        self.response = "TDIAL:{0};TPOLL:{1};PWST:{2};PWRS:{3},{4},{5};HW_CNT:{6};BAT:{7}".format(self.timerdial,self.timerpoll,self.timepwrsensor,self.pwrs_modo, self.pwrs_start, self.pwrs_end, self.counters_hw,self.reporta_bateria )
         return
 
 

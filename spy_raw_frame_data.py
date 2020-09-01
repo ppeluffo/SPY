@@ -208,6 +208,8 @@ class RAW_DATA_frame:
         # Paso 5: Preparo la respuesta y la envio al datalogger
         # Mando el line_id de la ultima linea recibida
         self.response_pload += 'RX_OK:{0};'.format(self.control_code_list[-1])
+        # Agrego el clock para resincronizar
+        self.response_pload += 'CLOCK:{};'.format(datetime.now().strftime('%y%m%d%H%M'))
         # Si hay comandos en la redis los incorporo a la respuesta
         self.response_pload += redis_db.get_cmd_outputs()
         #self.response_pload += redis_db.get_cmd_pilotos()
