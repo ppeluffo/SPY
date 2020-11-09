@@ -121,4 +121,10 @@ class RAW_INIT_frame:
             init_conf_consigna.process()
             return
 
+        if payload_class == 'CONF_MODBUS':
+            from SPY_init_conf_modbus import INIT_CONF_MODBUS
+            init_conf_modbus = INIT_CONF_MODBUS(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_modbus.process()
+            return
+
         return
