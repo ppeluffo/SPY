@@ -32,6 +32,8 @@ class INIT_CONF_APP:
             self.response = 'AP0:CONSIGNA;'
         elif self.aplicacion == 'PLANTAPOT':
             self.response = 'AP0:PLANTAPOT;'
+        elif self.aplicacion == 'EXTPOLL':
+            self.response = 'AP0:EXTPOLL;'
 
         return
 

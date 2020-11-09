@@ -55,6 +55,12 @@ class RAW_INIT_frame:
             init_conf_global_frame.process()
             return
 
+        if payload_class == 'UPDATE':
+            from SPY_init_conf_update import INIT_CONF_UPDATE
+            init_conf_global_update = INIT_CONF_UPDATE( self.dlgid, self.version, payload_dict, dlgbdconf_dict )
+            init_conf_global_update.process()
+            return
+
         if payload_class == 'CONF_BASE':
             from SPY_init_conf_base import INIT_CONF_BASE
             init_conf_base_frame = INIT_CONF_BASE( self.dlgid, self.version, dlgbdconf_dict )
@@ -113,6 +119,12 @@ class RAW_INIT_frame:
             from SPY_init_conf_consigna import INIT_CONF_CONSIGNA
             init_conf_consigna = INIT_CONF_CONSIGNA(self.dlgid, self.version, dlgbdconf_dict)
             init_conf_consigna.process()
+            return
+
+        if payload_class == 'CONF_MODBUS':
+            from SPY_init_conf_modbus import INIT_CONF_MODBUS
+            init_conf_modbus = INIT_CONF_MODBUS(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_modbus.process()
             return
 
         return

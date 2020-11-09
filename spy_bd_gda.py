@@ -30,7 +30,6 @@ class BDGDA:
             self.url = Config['BDATOS']['url_gda_ute']
         return
 
-
     def connect(self, tag='GDA'):
         """
         Retorna True/False si es posible generar una conexion a la bd GDA
@@ -56,7 +55,6 @@ class BDGDA:
             exit(1)
 
         return self.connected
-
 
     def read_piloto_conf(self, dlgid):
         '''
@@ -118,7 +116,6 @@ class BDGDA:
 
         return d
 
-
     def read_dlg_conf(self, dlgid, tag='GDA'):
         '''
         Leo la configuracion desde GDA
@@ -168,7 +165,6 @@ class BDGDA:
             log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, level='SELECT', msg='BD_{0} conf: [{1}][{2}]=[{3}]'.format( tag,canal, pname, d[(canal, pname)]))
 
         return d
-
 
     def update(self, dlgid, d, tag='GDA'):
 
@@ -225,6 +221,49 @@ class BDGDA:
 
         return
 
+    def update_analog(self,dlgid,ch,d,tag='GDA'):
+        log(module=__name__, server=self.server, function='update_analog', dlgid=dlgid, level='SELECT', msg='start_{}'.format(tag) )
+        #
+        if not self.connect():
+            log(module=__name__, server=self.server, function='update_analog', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
+            return False
+        #
+        log(module=__name__, function='process', dlgid=dlgid,
+            msg='UPDATE_ANALOG: CH:{0},imin={1},iMax={2},mmin={3},mMax={4}'.format(ch, d['IMIN'],d['IMAX'],d['MMIN'], d['MMAX']))
+        #
+        for key in d:
+            value = d[key]
+            sql = """
+            UPDATE spx_configuracion_parametros AS cp SET value = '{0}'
+                WHERE 
+                cp.parametro = '{1}'
+                AND cp.configuracion_id = (
+                    SELECT uc.id FROM 
+                    spx_unidades_configuracion AS uc 
+                    INNER JOIN spx_unidades AS u ON u.id = uc.dlgid_id
+                    WHERE u.dlgid = '{2}' AND uc.nombre = '{3}'
+            )""".format(value, key, dlgid, ch )
+            # log(module=__name__, function='process', dlgid=dlgid, msg='UPDATE_ANALOG: SQL=[{}]'.format(sql))
+
+            try:
+                query = text(sql)
+            except Exception as err_var:
+                log(module=__name__, server=self.server, function='update_analog', dlgid=dlgid,msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
+                log(module=__name__, server=self.server, function='update_analog', dlgid=dlgid,msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
+                return False
+            #
+            try:
+                rp = self.conn.execute(query)
+            except Exception as err_var:
+                if 'duplicate'.lower() in (str(err_var)).lower():
+                    # Los duplicados no hacen nada malo. Se da mucho en testing.
+                    log(module=__name__, server=self.server, function='update_analog', dlgid=dlgid, msg='WARN_{}: Duplicated Key'.format(tag))
+                else:
+                    log(module=__name__, server=self.server, function='update_analog', dlgid=dlgid, msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+
+            log(module=__name__, server=self.server, function='update_analog', dlgid=dlgid, level='SELECT', msg='{0}: {1}={2}'.format(tag, key,value))
+        #
+        return
 
     def process_commited_conf(self, dlgid, tag='GDA'):
         '''
@@ -262,7 +301,6 @@ class BDGDA:
         log(module=__name__, function='process_commited_conf', dlgid=dlgid, msg='{0}: cc={1}'.format(tag, cc))
         return (cc)
 
-
     def clear_commited_conf(self, dlgid, tag='GDA'):
 
         log(module=__name__, function='clear_commited_conf', dlgid=dlgid, level='SELECT', msg='start_{}'.format(tag))
@@ -287,7 +325,6 @@ class BDGDA:
             return False
 
         return True
-
 
     def insert_data_line(self, dlgid, d, tag='GDA'):
 
@@ -333,7 +370,6 @@ class BDGDA:
             return False
         else:
             return True
-
 
     def insert_data_online(self, dlgid, d, tag='GDA'):
 

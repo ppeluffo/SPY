@@ -114,8 +114,11 @@ def process_file(file):
         # Los archivos de GDA ya los procese al recibir el frame.
         # Si hubo error ya lo movi al directorio de errores.
         # Por lo tanto solo borro el archivo
-        log(module=__name__, server='processR1', function='process_file', level='SELECT', dlgid='SPYPROC01',msg='WARN: GDA ya procesado; {0} deleted  !!'.format(file))
-        os.remove(file)
+        try: 
+            log(module=__name__, server='processR1', function='process_file', level='SELECT', dlgid='SPYPROC01',msg='WARN: GDA ya procesado; {0} deleted  !!'.format(file))
+            os.remove(file)
+        except Exception as e: 
+            log(module=__name__, server='processR1', function='process_file', level='SELECT', dlgid='SPYPROC01',msg='WARN: GDA el archivo {0} no se pudo borrar o no existe !!'.format(file))
         return
 
     else:
@@ -186,7 +189,10 @@ if __name__ == '__main__':
                 # Creo un child
                 pid = os.fork()
                 if pid == 0:
-                    process_file(file)
+                    try:
+                        process_file(file)
+                    except Exception as e: 
+                        log(module=__name__, server='processR1', function='main', dlgid='SPYPROC01', msg='ERROR: process_file {} - {}'.format(file, str(e)))
                     sys.exit(0)
                 else:
                     pid_list.append(pid)

@@ -1,0 +1,14 @@
+Listado de modificaciones al sistema SPY.
+
+----------------------------------------------------------------------
+Version 2.0.0 @ 2020-09-03
+Incorporo las facilidades para MODBUS.
+1- Configuracion:
+* Agregamos la facilidad de configurar los tipos MODBUS en los frames de INIT.
+
+Archivos modificados:
+spy_raw_frame_init.py
+SPY_init_conf_modbus.py
+SPY_init_conf_global.py
+spy.conf
+spy.py
