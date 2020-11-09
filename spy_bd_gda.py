@@ -88,9 +88,9 @@ class BDGDA:
             log(module=__name__, server=self.server, function='read_piloto_conf', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
             return False
 
-        sql = """SELECT spx_unidades_configuracion.nombre as 'canal', 
+        sql = """SELECT spx_unidades_configuracion.nombre as canal, 
                          spx_configuracion_parametros.parametro, spx_configuracion_parametros.value, 
-                         spx_configuracion_parametros.configuracion_id as 'param_id' 
+                         spx_configuracion_parametros.configuracion_id as param_id 
                          FROM spx_unidades,spx_unidades_configuracion, spx_tipo_configuracion, spx_configuracion_parametros 
                          WHERE spx_unidades.id = spx_unidades_configuracion.dlgid_id 
                          AND spx_unidades_configuracion.tipo_configuracion_id = spx_tipo_configuracion.id 
@@ -140,7 +140,7 @@ class BDGDA:
             log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
             return
 
-        sql = """SELECT spx_unidades_configuracion.nombre as 'canal', spx_configuracion_parametros.parametro, 
+        sql = """SELECT spx_unidades_configuracion.nombre as canal, spx_configuracion_parametros.parametro, 
                     spx_configuracion_parametros.value, spx_configuracion_parametros.configuracion_id as \"param_id\" FROM spx_unidades,
                     spx_unidades_configuracion, spx_tipo_configuracion, spx_configuracion_parametros 
                     WHERE spx_unidades.id = spx_unidades_configuracion.dlgid_id 
