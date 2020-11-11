@@ -194,6 +194,11 @@ if __name__ == '__main__':
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
+        elif sys.argv[1] == 'CLEAN_ONLINE':
+            from spy_bd_gda import BDGDA
+            bd = BDGDA( modo = Config['MODO']['modo'] )
+            bd.clean_data_online()
+
         else:
             print_error()
 

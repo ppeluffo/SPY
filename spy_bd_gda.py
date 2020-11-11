@@ -8,6 +8,8 @@ from sqlalchemy import text
 from spy import Config
 from collections import defaultdict
 from spy_log import log
+import datetime as dt 
+import pandas as pd
 #import MySQLdb
 
 # ------------------------------------------------------------------------------
@@ -408,36 +410,59 @@ class BDGDA:
                     log(module=__name__, server=self.server, function='insert_data_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
                     errors += 1
 
-            # sql = """DELETE FROM spx_online  WHERE medida_id = ( SELECT uc.tipo_configuracion_id FROM spx_unidades AS u \
-            # JOIN spx_unidades_configuracion AS uc ON uc.dlgid_id = u.id JOIN spx_configuracion_parametros AS cp  ON cp.configuracion_id = uc.id \
-            # WHERE cp.parametro = 'NAME' AND cp.value = '{0}' AND u.dlgid = '{1}' ) AND ubicacion_id = \
-            # ( SELECT ubicacion_id FROM spx_instalacion WHERE unidad_id = ( SELECT id FROM spx_unidades WHERE dlgid = '{1}')) \
-            # AND id NOT IN( SELECT * FROM (SELECT id FROM spx_online WHERE medida_id = ( SELECT uc.tipo_configuracion_id FROM spx_unidades \
-            # AS u JOIN spx_unidades_configuracion AS uc ON uc.dlgid_id = u.id JOIN spx_configuracion_parametros AS cp  \
-            # ON cp.configuracion_id = uc.id WHERE cp.parametro = 'NAME' AND cp.value = '{0}' AND u.dlgid = '{1}' ) \
-            # AND ubicacion_id = ( SELECT ubicacion_id FROM spx_instalacion WHERE unidad_id = \
-            # ( SELECT id FROM spx_unidades WHERE dlgid = '{1}')) ORDER BY id DESC LIMIT 1) AS temp )""".format( key, dlgid)
-
-            # try:
-            #     query = text(sql)
-            # except Exception as err_var:
-            #     log(module=__name__, server=self.server, function='insert_data_online', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
-            #     log(module=__name__, server=self.server, function='insert_data_online', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
-            #     errors += 1
-            #     continue
-
-            # try:
-            #     rp = self.conn.execute(query)
-            # except Exception as err_var:
-            #     log(module=__name__, server=self.server, function='insert_data_online', dlgid=dlgid, msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-            #     errors += 1
-            #     continue
-
         if errors > 0:
             return False
         else:
             return True
 
+    def clean_data_online(self, tag='GDA'):
+        dlgid = 'all'
+
+        if not self.connect():
+            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
+            return
+
+        sql = "SELECT * FROM spx_online"
+
+        try:
+            df = pd.read_sql_query(sql, self.conn)
+            df.set_index('id', inplace=True)
+            df_error = df[(df['fechadata'] > dt.datetime.now()) | (df['fechadata'].isna())]
+            df.drop(df_error.index, inplace=True, axis=0)            
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
+            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
+            return False
+
+        # Borro datos invalidos
+        try:
+            for i, row in df_error.iterrows():
+                print(str(i))
+                sql = "DELETE FROM spx_online WHERE id={}".format(i)
+                    
+                query = text(sql)
+                self.conn.execute(query)
+
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+            return False
+
+        # Borro datos repetidos
+        try:
+
+            df.sort_values(['medida_id','ubicacion_id', 'fechadata'], inplace=True)
+            df.drop_duplicates(('medida_id','ubicacion_id'), keep="last", inplace=True)  
+
+            for i, d in df.iterrows():
+                sql = "DELETE FROM spx_online WHERE ubicacion_id = {} AND medida_id = {} AND fechadata < '{}'".format(d['ubicacion_id'], d['medida_id'], (d['fechadata']).strftime("%Y-%m-%d %H:%M:%S"))
+                query = text(sql)
+                self.conn.execute(query)  
+
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
+            return False        
+
+        return True
 
 
 class BDGDA_TAHONA(BDGDA):
