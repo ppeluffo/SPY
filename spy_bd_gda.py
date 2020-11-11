@@ -420,7 +420,7 @@ class BDGDA:
 
         if not self.connect():
             log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
-            return
+            return "can\'t connect !!"
 
         sql = "SELECT * FROM spx_online"
 
@@ -432,7 +432,7 @@ class BDGDA:
         except Exception as err_var:
             log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
             log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
-            return False
+            return err_var
 
         # Borro datos invalidos
         try:
@@ -445,7 +445,7 @@ class BDGDA:
 
         except Exception as err_var:
             log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-            return False
+            return err_var
 
         # Borro datos repetidos
         try:
@@ -460,9 +460,9 @@ class BDGDA:
 
         except Exception as err_var:
             log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-            return False        
+            return err_var        
 
-        return True
+        return False
 
 
 class BDGDA_TAHONA(BDGDA):
