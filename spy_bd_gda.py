@@ -427,7 +427,7 @@ class BDGDA:
         try:
             df = pd.read_sql_query(sql, self.conn)
             df.set_index('id', inplace=True)
-            df_error = df[(df['fechadata'] > dt.datetime.now()) | (df['fechadata'].isna())]
+            df_error = df[ ( df['fechadata'] > dt.datetime.now() ) | ( df['fechadata'].isnull() )]
             df.drop(df_error.index, inplace=True, axis=0)            
         except Exception as err_var:
             log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
