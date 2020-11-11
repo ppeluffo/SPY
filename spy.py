@@ -197,7 +197,10 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'CLEAN_ONLINE':
             from spy_bd_gda import BDGDA
             bd = BDGDA( modo = Config['MODO']['modo'] )
-            bd.clean_data_online()
+            if bd.clean_data_online():
+                print("OK")
+            else:
+                print('ERROR')
 
         else:
             print_error()
