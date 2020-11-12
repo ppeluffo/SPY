@@ -218,7 +218,7 @@ class RAW_DATA_frame:
         self.process_commited_conf()
         self.send_response()
         
-        Paso 6: Inserto las lineas en GDA.
+        # Paso 6: Inserto las lineas en GDA.
         if self.process_and_insert_lines_into_GDA():
             # Si salio bien renombro el archivo a .dat para que el process lo use
             os.rename(tmp_file, dat_file)
