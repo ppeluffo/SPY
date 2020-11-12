@@ -415,56 +415,6 @@ class BDGDA:
         else:
             return True
 
-    def clean_data_online(self, tag='GDA'):
-        dlgid = 'all'
-
-        if not self.connect():
-            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
-            return "can\'t connect !!"
-
-        sql = "SELECT * FROM spx_online"
-
-        try:
-            df = pd.read_sql_query(sql, self.conn)
-            df.set_index('id', inplace=True)
-            df_error = df[ ( df['fechadata'] > dt.datetime.now() ) | ( df['fechadata'].isnull() )]
-            df.drop(df_error.index, inplace=True, axis=0)            
-        except Exception as err_var:
-            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
-            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
-            return err_var
-
-        # Borro datos invalidos
-        try:
-            for i, row in df_error.iterrows():
-                print(str(i))
-                sql = "DELETE FROM spx_online WHERE id={}".format(i)
-                    
-                query = text(sql)
-                self.conn.execute(query)
-
-        except Exception as err_var:
-            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-            return err_var
-
-        # Borro datos repetidos
-        try:
-
-            df.sort_values(['medida_id','ubicacion_id', 'fechadata'], inplace=True)
-            df.drop_duplicates(('medida_id','ubicacion_id'), keep="last", inplace=True)  
-
-            for i, d in df.iterrows():
-                sql = "DELETE FROM spx_online WHERE ubicacion_id = {} AND medida_id = {} AND fechadata < '{}'".format(d['ubicacion_id'], d['medida_id'], (d['fechadata']).strftime("%Y-%m-%d %H:%M:%S"))
-                query = text(sql)
-                self.conn.execute(query)  
-
-        except Exception as err_var:
-            log(module=__name__, server=self.server, function='clean_data_online', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-            return err_var        
-
-        return False
-
-
 class BDGDA_TAHONA(BDGDA):
 
     def __init__(self, modo='local',server='comms'):
