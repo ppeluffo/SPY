@@ -39,7 +39,7 @@ def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):
 
     with daemon.DaemonContext(): 
         log(module=__name__, function='process', dlgid=dlgid, msg='Start Daemon')
-
+    
         # Paso 6: Inserto las lineas en GDA.
         if process_and_insert_lines_into_GDA(dlgid, data_line_list):
             # Si salio bien renombro el archivo a .dat para que el process lo use
