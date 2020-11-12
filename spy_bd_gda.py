@@ -200,6 +200,9 @@ class BDGDA:
         # PASS2: Actualizo los parametros dinamicos
         for key in d:
             value = d[key]
+            if key == 'RCVDLINE': 
+                continue 
+
             sql = """UPDATE spx_configuracion_parametros SET value = '{0}' WHERE parametro = '{1}' \
                          AND configuracion_id = ( SELECT id FROM spx_unidades_configuracion WHERE nombre = 'BASE' \
                          AND dlgid_id = ( SELECT id FROM spx_unidades WHERE dlgid = '{2}'))""".format(value, key, dlgid)
