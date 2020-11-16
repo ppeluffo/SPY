@@ -5,7 +5,7 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 import pandas as pd
 import datetime as dt
-engine = create_engine('mysql://ulises:pexco599@192.168.0.8/GDA', pool_recycle=3600, pool_size = 5)
+engine = create_engine('postgresql+psycopg2://admin:pexco599@192.168.0.6/GDA', pool_recycle=3600, pool_size = 5)
 conn = engine.connect()
 
 
@@ -14,8 +14,7 @@ df = pd.read_sql_query(sql, conn)
 df.set_index('id', inplace=True)
 df
 
-
-# data_error = df[df['fechadata'] > dt.datetime.now()]['id'].to_list()
+# Eliminar los datos invalidos en online.
 df_error = df[(df['fechadata'] > dt.datetime.now()) | (df['fechadata'].isnull())]
 df.drop(df_error.index, inplace=True, axis=0)
 df_error           
@@ -28,6 +27,7 @@ for i, row in df_error.iterrows():
     query = text(sql)
     conn.execute(query)
 
+# Eliminar los datos viejos en online.
 
 df.sort_values(['medida_id','ubicacion_id', 'fechadata'], inplace=True)
 df.drop_duplicates(('medida_id','ubicacion_id'), keep="last", inplace=True)  
@@ -48,3 +48,19 @@ for d in dic_list:
     query = text(sql)
     conn.execute(query)
 
+# Eliminar tipos de configuracion no configurados en el DLG.
+sql = """SELECT DISTINCT ubicacion_id, tipo_configuracion_id FROM 
+spx_unidades_configuracion AS uc
+INNER JOIN spx_instalacion AS i ON uc.dlgid_id = i.unidad_id
+ORDER BY ubicacion_id, tipo_configuracion_id"""
+df_tc = pd.read_sql_query(sql, conn)
+
+for d in dic_list: 
+    if d['medida_id'] not in df_tc[df_tc['ubicacion_id']==d['ubicacion_id']]['tipo_configuracion_id'].to_list():
+        print("Delete invalid TC")
+        print(d['ubicacion_id'])
+        print(d['medida_id'])
+        sql = "DELETE FROM spx_online WHERE ubicacion_id = {} AND medida_id = {} ".format(d['ubicacion_id'], d['medida_id'])
+
+        query = text(sql)
+        conn.execute(query)  
