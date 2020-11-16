@@ -56,7 +56,7 @@ ORDER BY ubicacion_id, tipo_configuracion_id"""
 df_tc = pd.read_sql_query(sql, conn)
 
 for d in dic_list: 
-    if d['medida_id'] not in df_tc[df_tc['ubicacion_id']==d['ubicacion_id']]['tipo_configuracion_id'].to_list():
+    if d['medida_id'] not in df_tc[df_tc['ubicacion_id']==d['ubicacion_id']]['tipo_configuracion_id'].tolist():
         print("Delete invalid TC")
         print(d['ubicacion_id'])
         print(d['medida_id'])
