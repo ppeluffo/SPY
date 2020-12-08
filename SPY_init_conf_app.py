@@ -34,6 +34,8 @@ class INIT_CONF_APP:
             self.response = 'AP0:PLANTAPOT;'
         elif self.aplicacion == 'EXTPOLL':
             self.response = 'AP0:EXTPOLL;'
+        else:
+            self.response = 'AP0:OFF;'
 
         return
 

@@ -110,66 +110,71 @@ class INIT_CONF_GLOBAL:
         # Analizo los checksums individuales
         # Checksum parametros base
         #log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT',msg='DEBUG_base')
-        a = int(self.payload_dict.get('BASE', '0'), 16)
-        b = self.PV_checksum_base(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-        if a != b:
-            self.response_pload += ';BASE'
-
-        # checksum parametros analog
-        #log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG_analog')
-        a = int(self.payload_dict.get('AN', '0'), 16)
-        b = self.PV_checksum_analog(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_AN: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-        if a != b:
-            self.response_pload += ';ANALOG'
-
-        # chechsum parametros digital
-        a = int(self.payload_dict.get('DG', '0'), 16)
-        b = self.PV_checksum_digital(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_DG: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-        if a != b:
-            self.response_pload += ';DIGITAL'
-
-        # chechsum parametros contadores
-        a = int(self.payload_dict.get('CNT', '0'), 16)
-        b = self.PV_checksum_counters(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_CNT: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-        if a != b:
-            self.response_pload += ';COUNTERS'
-
-        # chechsum parametros range
-        a = int(self.payload_dict.get('RG', '0'),16)
-        b = self.PV_checksum_range(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_RANGE: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-        if a != b:
-            self.response_pload += ';RANGE'
-
-        # chechsum parametros psensor
-        a = int(self.payload_dict.get('PSE', '0'),16)
-        b = self.PV_checksum_psensor(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-        if a != b:
-            self.response_pload += ';PSENSOR'
-
-        # chechsum parametros aplicacion
-        a = int(self.payload_dict.get('APP', '0'),16)
-        b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-        if a != b:
-            self.response_pload += ';APLICACION'
-
-        # chechsum parametros modbus
-        if 'MBUS' in self.payload_dict.keys():
-            # fw_version = u_get_fw_version(self.dlgbdconf_dict)
-            # if fw_version >= 305:
-            a = int(self.payload_dict.get('MBUS', '0'),16)
-            b = self.PV_checksum_modbus(self.dlgbdconf_dict)
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+        try:
+            a = int(self.payload_dict.get('BASE', '0'), 16)
+            b = self.PV_checksum_base(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: dlg={0}, bd={1}'.format(hex(a),hex(b)))
             if a != b:
-                self.response_pload += ';MBUS'
+                self.response_pload += ';BASE'
 
-        self.send_response()
+            # checksum parametros analog
+            #log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG_analog')
+            a = int(self.payload_dict.get('AN', '0'), 16)
+            b = self.PV_checksum_analog(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_AN: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';ANALOG'
+
+            # chechsum parametros digital
+            a = int(self.payload_dict.get('DG', '0'), 16)
+            b = self.PV_checksum_digital(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_DG: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';DIGITAL'
+
+            # chechsum parametros contadores
+            a = int(self.payload_dict.get('CNT', '0'), 16)
+            b = self.PV_checksum_counters(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_CNT: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';COUNTERS'
+
+            # chechsum parametros range
+            a = int(self.payload_dict.get('RG', '0'),16)
+            b = self.PV_checksum_range(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_RANGE: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';RANGE'
+
+            # chechsum parametros psensor
+            a = int(self.payload_dict.get('PSE', '0'),16)
+            b = self.PV_checksum_psensor(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';PSENSOR'
+
+            # chechsum parametros aplicacion
+            a = int(self.payload_dict.get('APP', '0'),16)
+            b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';APLICACION'
+
+            # chechsum parametros modbus
+            if 'MBUS' in self.payload_dict.keys():
+                # fw_version = u_get_fw_version(self.dlgbdconf_dict)
+                # if fw_version >= 305:
+                a = int(self.payload_dict.get('MBUS', '0'),16)
+                b = self.PV_checksum_modbus(self.dlgbdconf_dict)
+                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+                if a != b:
+                    self.response_pload += ';MBUS'
+
+            self.send_response()
+
+        except: 
+            log(module=__name__, function='process', dlgid=self.dlgid, level='ERROR', msg='INIT_CONF_GLOBAL: Error: Linea mal formada!!!')
+
         return
 
 
