@@ -1,5 +1,3 @@
-#!/home/pablo/anaconda3/bin/python
-
 #!/usr/bin/python3 -u
 """
 Version 1.0 @ 2019-07-19
