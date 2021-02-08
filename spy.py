@@ -1,3 +1,5 @@
+#!/home/pablo/anaconda3/bin/python
+
 #!/usr/bin/python3 -u
 """
 Version 1.0 @ 2019-07-19
@@ -81,6 +83,7 @@ def print_error():
      DEBUG_CONF_PPOT_SMS
      DEBUG_CONF_PPOT_LEVELS
      DEBUG_CONF_MODBUS
+     DEBUG_CONF_PILOTO
      
      DEBUG_CTL_SCAN
      DEBUG_DATA
@@ -194,13 +197,19 @@ if __name__ == '__main__':
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
+        elif sys.argv[1] == 'DEBUG_CONF_PILOTO':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_app_piloto']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
         else:
             print_error()
 
     else:
         # Leo del cgi
         query_string = os.environ.get('QUERY_STRING')
-        if query_string == None:
+        if query_string is None:
             print_error()
 
     # Proceso.

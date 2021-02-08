@@ -203,7 +203,8 @@ class RAW_DATA_frame:
         
         # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
         log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
-        if redis_db.execute_callback(): self.process_callbacks()
+        if redis_db.execute_callback():
+            self.process_callbacks()
 
         # Paso 5: Preparo la respuesta y la envio al datalogger
         # Mando el line_id de la ultima linea recibida
@@ -212,7 +213,7 @@ class RAW_DATA_frame:
         self.response_pload += 'CLOCK:{};'.format(datetime.now().strftime('%y%m%d%H%M'))
         # Si hay comandos en la redis los incorporo a la respuesta
         self.response_pload += redis_db.get_cmd_outputs()
-        #self.response_pload += redis_db.get_cmd_pilotos()
+        # self.response_pload += redis_db.get_cmd_pilotos()
         self.response_pload += redis_db.get_cmd_reset()
         # Si el commited conf indica reset lo agrego a la respuesta
         self.process_commited_conf()
