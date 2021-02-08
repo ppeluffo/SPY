@@ -392,6 +392,8 @@ class INIT_CONF_GLOBAL:
             cks_str = self.PV_checksum_str_app_plantapot(d)
         elif output_modo == 'EXTPOLL':
             cks_str = self.PV_checksum_str_app_extpoll(d)
+        elif output_modo == 'PILOTO':
+            cks_str = self.PV_checksum_str_app_piloto(d)
 
         fw_version = u_get_fw_version(self.dlgbdconf_dict)
         if fw_version >= 300:
@@ -481,6 +483,30 @@ class INIT_CONF_GLOBAL:
     def PV_checksum_str_app_extpoll(self,d):
         cks_str = 'EXTPOLL'
         return(cks_str)
+
+
+    def PV_checksum_str_app_piloto(self, d):
+        # header
+        plt_hhmm0 = int(d.get(('PILOTO', 'HHMM0'), '0000'))
+        plt_pres0 = float(d.get(('PILOTO', 'P0'), '0'))
+        plt_hhmm1 = int(d.get(('PILOTO', 'HHMM1'), '0000'))
+        plt_pres1 = float(d.get(('PILOTO', 'P1'), '0'))
+        plt_hhmm2 = int(d.get(('PILOTO', 'HHMM2'), '0000'))
+        plt_pres2 = float(d.get(('PILOTO', 'P2'), '0'))
+        plt_hhmm3 = int(d.get(('PILOTO', 'HHMM3'), '0000'))
+        plt_pres3 = float(d.get(('PILOTO', 'P3'), '0'))
+        plt_hhmm4 = int(d.get(('PILOTO', 'HHMM4'), '0000'))
+        plt_pres4 = float(d.get(('PILOTO', 'P4'), '0'))
+
+        cks_str = 'PLT;SLOT0:%04d,%.02f;' % (plt_hhmm0, plt_pres0)
+        cks_str += 'SLOT1:%04d,%.02f;' % (plt_hhmm1, plt_pres1)
+        cks_str += 'SLOT2:%04d,%.02f;' % (plt_hhmm2, plt_pres2)
+        cks_str += 'SLOT3:%04d,%.02f;' % (plt_hhmm3, plt_pres3)
+        cks_str += 'SLOT4:%04d,%.02f;' % (plt_hhmm4, plt_pres4)
+        # print('DEBUG_HASH_APP-[{}]'.format(cks_str))
+        # cks = self.PV_calcular_hash_checksum(cks_str)
+        # print('DEBUG: CKS={}'.format( hex(cks)))
+        return cks_str
 
 
     def PV_checksum_modbus(self, d):
