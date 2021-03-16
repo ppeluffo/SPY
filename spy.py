@@ -1,6 +1,6 @@
 #!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 """
-Version 1.0 @ 2019-07-19
+Version 1.1 @ 2021-03-16
 
 Ref:
     Consulta sql sin resultados
