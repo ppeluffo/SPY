@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -u
+#!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 """
 Modulo de conexion a la BD BDSPY.
 Implemento la BD como una clase

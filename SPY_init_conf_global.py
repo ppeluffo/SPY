@@ -40,7 +40,7 @@ hash_table = [ 93,  153, 124,  98, 233, 146, 184, 207, 215,  54, 208, 223, 254, 
 
 class INIT_CONF_GLOBAL:
     '''
-    PLOAD=CLASS:GLOBAL;NACH:5;NDCH:3;NCNT:3;SIMPWD:DEFAULT;IMEI:860585004367917;SIMID:895980161423091055;CSQ:87;WRST:0x00;BASE:0x32;AN:0xCB;DG:0x1A;CNT:0x47;RG:0xF7;PSE:0x73;OUT:0xB2;MBUS:0xA4
+    PLOAD=CLASS:GLOBAL;NACH:5;NDCH:3;NCNT:3;SIMPWD:DEFAULT;IMEI:860585004367917;SIMID:895980161423091055;CSQ:87;WRST:0x00;BASE:0x32;AN:0xCB;DG:0x1A;CNT:0x47;RG:0xF7;PSE:0x73;OUT:0xB2;
     '''
 
     def __init__(self, dlgid, version, payload_dict, dlgbdconf_dict):
@@ -154,21 +154,11 @@ class INIT_CONF_GLOBAL:
                 self.response_pload += ';PSENSOR'
 
             # chechsum parametros aplicacion
-            a = int(self.payload_dict.get('APP', '0'),16)
+            a = int(self.payload_dict.get('APP', '0'), 16)
             b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
             if a != b:
                 self.response_pload += ';APLICACION'
-
-            # chechsum parametros modbus
-            if 'MBUS' in self.payload_dict.keys():
-                # fw_version = u_get_fw_version(self.dlgbdconf_dict)
-                # if fw_version >= 305:
-                a = int(self.payload_dict.get('MBUS', '0'),16)
-                b = self.PV_checksum_modbus(self.dlgbdconf_dict)
-                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-                if a != b:
-                    self.response_pload += ';MBUS'
 
             self.send_response()
 
@@ -182,7 +172,6 @@ class INIT_CONF_GLOBAL:
         checksum = 0
         for ch in line:
             checksum = hash_table[ (checksum ^ ord(ch))]
-
         return checksum
 
 
@@ -394,6 +383,8 @@ class INIT_CONF_GLOBAL:
             cks_str = self.PV_checksum_str_app_extpoll(d)
         elif output_modo == 'PILOTO':
             cks_str = self.PV_checksum_str_app_piloto(d)
+        elif output_modo == 'MODBUS':
+            cks_str = self.PV_checksum_str_app_modbus(d)
 
         fw_version = u_get_fw_version(self.dlgbdconf_dict)
         if fw_version >= 300:
@@ -509,28 +500,23 @@ class INIT_CONF_GLOBAL:
         return cks_str
 
 
-    def PV_checksum_modbus(self, d):
-        # Los canales modbus con M0 y M1
-        # Pueden faltar algunos que no usemos por lo que no esten definidos.
+    def PV_checksum_str_app_modbus(self, d):
+        # chechsum parametros modbus
         # SLA:addr;M0:NAM0,sl_addr0,length0,fc0;M1:NAM1,sl_addr1,length1,fc1;
-        cks_str = 'SLA:0x%02x;' % int(d.get(('BASE','MBUS_SLAVE_ADDR'),'0'),16)
-        if ('M0', 'NAME') in d.keys():  # ( 'M0', 'NAME' ) in  d.keys()
-            cks_str += 'M0:%s,' % ( d.get(('M0', 'NAME'), 'X'))
-            cks_str += '0x%04x,' % (int(d.get(('M0', 'ADDR'), '0x00'),16))
-            cks_str += '0x%02x,' % ( int( d.get(('M0', 'SIZE'), '0'), 16))
-            cks_str += '0x%02x;' % ( int(d.get(('M0', 'FCODE'), '0'), 16))
-        else:
-            cks_str += 'M0:X,0x0000,0x00,0x00;'
-        if ('M1', 'NAME') in d.keys():  #
-            cks_str += 'M1:%s,' % (d.get(('M1', 'NAME'), 'X'))
-            cks_str += '0x%04x,' % (int(d.get(('M1', 'ADDR'), '0x00'), 16))
-            cks_str += '0x%02x,' % (int(d.get(('M1', 'SIZE'), '0'), 16))
-            cks_str += '0x%02x;' % (int(d.get(('M1', 'FCODE'), '0'), 16))
-        else:
-             cks_str += 'M1:X,0x0000,0x00,0x00;'
-        cks = self.PV_calcular_hash_checksum(cks_str)
-        log(module=__name__, function='PV_checksum_modbus', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: [{0}][{1}]'.format(cks_str, hex(cks)))
-        return cks
+        cks_str = 'MODBUS;SLA:%04d;' % int(d.get(('BASE', 'MBUS_SLAVE_ADDR'), '0'))
+        for ch in ('M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11'):
+            name = d.get((ch, 'NAME'), 'X')
+            addr = int(d.get((ch, 'ADDR'), '0'))
+            size = int(d.get((ch, 'SIZE'), '0'))
+            fcode = int(d.get((ch, 'FCODE'), '0'))
+            tipo = d.get((ch, 'TIPO'), 'F')
+            if tipo.upper() == 'FLOAT':
+                tipo = 'F'
+            else:
+                tipo = 'I'
+            cks_str += '%s:%s,%04d,%02d,%02d,%c;' % (ch, name, addr, size, fcode, tipo)
+
+        return cks_str
 
 
 if __name__ == '__main__':

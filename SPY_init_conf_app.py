@@ -36,6 +36,8 @@ class INIT_CONF_APP:
             self.response = 'AP0:EXTPOLL;'
         elif self.aplicacion == 'PILOTO':
             self.response = 'AP0:PILOTO;'
+        elif self.aplicacion == 'MODBUS':
+            self.response = 'AP0:MODBUS;'
         else:
             self.response = 'AP0:OFF;'
 

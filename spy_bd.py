@@ -1,4 +1,4 @@
-#!/usr/bin/python3 -u
+#!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 
 # -*- coding: utf-8 -*-
 """
@@ -12,6 +12,7 @@ from spy_bd_gda import BDGDA, BDGDA_TAHONA
 from spy_bd_dlgdb import DLGDB
 from spy_bd_ose import BDOSE_PQ, BDOSE_PZ, BDOSE_TQ
 from spy_log import log
+
 #------------------------------------------------------------------------------
 class BD:
 

@@ -1,6 +1,4 @@
-#!/home/pablo/anaconda3/bin/python
-
-#!/usr/bin/python3 -u
+#!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 """
 Version 1.0 @ 2019-07-19
 
@@ -193,7 +191,7 @@ if __name__ == '__main__':
 
         elif sys.argv[1] == 'DEBUG_CONF_MODBUS':
             # Uso un query string fijo de test del archivo .conf
-            query_string = Config['DEBUG']['debug_conf_modbus']
+            query_string = Config['DEBUG']['debug_conf_app_modbus']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 

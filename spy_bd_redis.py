@@ -47,6 +47,8 @@ class Redis():
                 self.rh.hset(self.dlgid, 'PSLOT', '-1')
             if not self.rh.hexists(self.dlgid, 'MEMFORMAT'):
                 self.rh.hset(self.dlgid, 'MEMFORMAT', 'FALSE')
+            if not self.rh.hexists(self.dlgid, 'MODBUS'):
+                self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
 
             log(module=__name__, function='create_rcd', level='SELECT', dlgid=self.dlgid, msg='Redis init rcd. OK !!')
         else:
@@ -74,12 +76,23 @@ class Redis():
         # SALIDAS
         response = ''
         if self.connected:
+            # DOUTS
             if self.rh.hexists(self.dlgid, 'OUTPUTS'):
                 outputs = int(self.rh.hget(self.dlgid, 'OUTPUTS'))
                 if outputs != -1:
                     response = 'DOUTS=%s:' % outputs
 
             self.rh.hset(self.dlgid, 'OUTPUTS', '-1')
+            #
+            # MODBUS
+            # Devuelve un bytearray por lo que decode lo transforma en string
+            if self.rh.hexists(self.dlgid, 'MODBUS'):
+                mbus_line = self.rh.hget(self.dlgid, 'MODBUS').decode()
+                if mbus_line != 'NUL':
+                    response = 'MBUS=%s;' % mbus_line
+
+            self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
+
         else:
             log(module=__name__, function='get_cmd_outputs', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
 

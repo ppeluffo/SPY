@@ -17,15 +17,24 @@ class INIT_CONF_MODBUS:
         self.dlgid = dlgid
         self.version = version
         self.dconf = dconf
-        self.response = 'SLA:0x%02x;' % int( dconf.get(('BASE','MBUS_SLAVE_ADDR'),'0'),16)
-        self.response += 'M0:%s,' % (dconf.get(('M0', 'NAME'), 'X'))
-        self.response += '0x%04x,' % ( int(dconf.get(('M0', 'ADDR'), '0x00'), 16) )
-        self.response += '0x%02x,' % (  int(dconf.get(('M0', 'SIZE'), '0'), 16) )
-        self.response += '0x%02x;' % ( int(dconf.get(('M0', 'FCODE'), '0'),16) )
-        self.response += 'M1:%s,' % (dconf.get(('M1', 'NAME'), 'X'))
-        self.response += '0x%04x,' % ( int(dconf.get(('M1', 'ADDR'), '0x00'), 16) )
-        self.response += '0x%02x,' % (  int(dconf.get(('M1', 'SIZE'), '0'), 16) )
-        self.response += '0x%02x;' % ( int(dconf.get(('M1', 'FCODE'), '0'),16) )
+        self.response = ''
+
+        self.sla = dconf.get(('BASE', 'MBUS_SLAVE_ADDR'), '0')
+        self.response += 'SLA:{0};'.format(self.sla)
+
+        for ch in ('M0', 'M1', 'M2', 'M3', 'M4', 'M5', 'M6', 'M7', 'M8', 'M9', 'M10', 'M11'):
+            self.name = dconf.get((ch, 'NAME'), 'X')
+            self.addr = int(dconf.get((ch, 'ADDR'), '0'))
+            self.size = int(dconf.get((ch, 'SIZE'), '0'))
+            self.fcode = int(dconf.get((ch, 'FCODE'), '0'))
+            self.tipo = dconf.get((ch, 'TIPO'), 'F')
+            if self.tipo.upper() == 'FLOAT':
+                self.tipo = 'F'
+            else:
+                self.tipo = 'I'
+
+            self.response += '{0}:{1},{2},{3},{4},{5};'.format(ch, self.name, self.addr,self.size,self.fcode,self.tipo)
+
         return
 
     def process(self):
@@ -33,7 +42,7 @@ class INIT_CONF_MODBUS:
         El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
-        pload = 'CLASS:MODBUS;{}'.format(self.response )
+        pload = 'CLASS:APP_B;{}'.format(self.response )
         u_send_response('INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
