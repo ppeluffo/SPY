@@ -203,8 +203,8 @@ class RAW_DATA_frame:
         
         # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
         log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
-        if redis_db.execute_callback():
-            self.process_callbacks()
+        ##if redis_db.execute_callback():		# yosniel cabrera -> elimine la condicion de que preguntara por type en redis antes de llamar al callback
+        self.process_callbacks()
 
         # Paso 5: Preparo la respuesta y la envio al datalogger
         # Mando el line_id de la ultima linea recibida
