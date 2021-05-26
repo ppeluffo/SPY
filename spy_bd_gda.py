@@ -8,6 +8,7 @@ from sqlalchemy import text
 from spy import Config
 from collections import defaultdict
 from spy_log import log
+from spy_utils import u_dataline_to_dict
 import datetime as dt 
 import pandas as pd
 #import MySQLdb
@@ -330,6 +331,93 @@ class BDGDA:
             return False
 
         return True
+
+    def insert_data(self, dlgid, data_line_list, tag='GDA'):       
+        data = []
+        keys = []
+        
+        # Parseo los datos
+        for line in data_line_list:
+            # Paso los datos a un diccionario con el formato correcto para la base.
+            d = u_dataline_to_dict(line)
+            data.append(d)
+
+            #  Armo un diccionario con las claves de cada medida.
+            nkeys = [ k for k in d if k not in (['timestamp', 'RCVDLINE'] + keys) ]
+            keys = keys + nkeys        
+        
+        # Armo un string con las claves de cada medida para usar en la consulta.
+        strkeys = '\''+'\', \''.join(keys)+'\''
+        
+        # Consulta que nos regresa un diccionario con la informacion necesaria. 
+        sql_data = """\
+        SELECT cp.value as key , uc.tipo_configuracion_id as id, i.ubicacion_id \
+        FROM spx_unidades AS u \
+        JOIN spx_unidades_configuracion AS uc ON uc.dlgid_id = u.id AND u.dlgid = '{0}' \
+        JOIN spx_configuracion_parametros AS cp  ON cp.configuracion_id = uc.id \
+        JOIN spx_instalacion as i ON i.unidad_id = u.id \
+        WHERE \
+        cp.parametro = 'NAME' AND cp.value in ({1})""".format(dlgid, strkeys)
+
+        # Si hay error en el armado de la consulta envio el error y termino el proceso
+        try:
+            query = text(sql_data)
+            tprp = self.conn.execute(query) 
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_data))
+            log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
+            return False
+
+        # tp contendra por ejemplo {'bt': 8, 'q0': 161}
+        # ubicacion_id tendra el id de la ubicacion
+        tp = {}
+        ubicacion_id = None
+        for r in tprp:
+            tp[r[0]] = r[1]
+            ubicacion_id = r[2]
+
+        # Si existe el dlg quiere decir que hay medidas asociadas y una instalacion. 
+        # En caso contrario seguramente hay medidas asociadas pero no una instalacion.
+        if ubicacion_id:
+            # Se arma una unica consulta y al final se agregra ON CONFLICT DO NOTHING que en caso de datos duplicados o 
+            # problemas con las fechas descarta la inserción del dato erroneo.
+            sql_insert = """INSERT INTO spx_datos( \
+            fechasys, fechadata, valor, medida_id, ubicacion_id) \
+            VALUES \
+            """
+            for d in data:
+                for m in tp:     
+                    if m in d:
+                        sql_insert += "( now(), '{0}', {1}, {2}, {3}),".format(d['timestamp'],d[m], tp[m], ubicacion_id)
+            
+            sql_insert = sql_insert[:-1] + ' ON CONFLICT DO NOTHING'
+
+            # Inserto en spx_datos
+            try:
+                query = text(sql_insert)
+                self.conn.execute(query) 
+            except Exception as err_var:
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_data))
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
+                return False
+
+            # Inserto en spx_online
+            # Se usa la misma consulta pero se cambia spx_datos por spx_online
+            try:
+                sql_online = sql_insert.replace('spx_datos', 'spx_online',1)
+                query = text(sql_online)
+                self.conn.execute(query) 
+            except Exception as err_var:
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_online))
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
+                return False            
+
+            log(module=__name__, function='insert_data', dlgid=dlgid, msg='OK')
+            return True
+
+        else: 
+            log(module=__name__, function='insert_data', dlgid=dlgid, msg='ERROR No existe instalacion para este equipo.')
+            return False
 
     def insert_data_line(self, dlgid, d, tag='GDA'):
 
