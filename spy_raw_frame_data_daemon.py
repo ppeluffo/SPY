@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -u
 
-from spy_log import log, config_logger
+from spy_log import log
 import os
 import sys
 from spy import Config
@@ -13,22 +13,11 @@ import daemon
 import shutil
 
 
-def process_and_insert_lines_into_GDA(dlgid, data_line_list):
-    # self.data_line_list = [ DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
-    #                         DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
-    #                         DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
-    #   
-    print(Config['MODO']['modo'])
-
-
-    return True
-
 def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):   
     # Paso el proceso a demonio.
-    log(module=__name__, function='process', dlgid=dlgid, msg='Start Daemon')
-    
+
     with daemon.DaemonContext(): 
-        log(module=__name__, function='process', dlgid=dlgid, msg=Config['MODO']['modo'])
+        log(module=__name__, function='process', dlgid=dlgid, msg='Start Daemon')
         bd = BDGDA( modo = Config['MODO']['modo'] )
         bd.connect()
         # Paso 6: Inserto las lineas en GDA.
@@ -42,7 +31,6 @@ def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):
             errfile = os.path.join(root_path,errdirname, filename)
             log(module=__name__, server='processR1', function='move_file_to_error_dir', dlgid=dlgid, msg='errfile={}'.format(errfile))
             shutil.move(tmp_file, errfile)        
-
         log(module=__name__, function='process', dlgid=dlgid, msg='End Daemon')
         os._exit(0)
 

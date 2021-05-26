@@ -332,7 +332,9 @@ class BDGDA:
 
         return True
 
-    def insert_data(self, dlgid, data_line_list, tag='GDA'):       
+    def insert_data(self, dlgid, data_line_list, tag='GDA'):  
+        import time 
+        time.sleep(10)    
         data = []
         keys = []
         # Parseo los datos
