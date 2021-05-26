@@ -207,14 +207,9 @@ class RAW_DATA_frame:
         # else:
         #     # Algo anduvo mal y no pude insertarlo en GDA
         #     move_file_to_error_dir(tmp_file)
-
-        # p = Process(name='daemon_insert_gda',target=self.process_and_insert_lines_into_GDA())
-        # p.daemon = True
-        # p.start()
-
+        log(module=__name__, function='process', dlgid=self.dlgid, msg='Start Daemon')
         root_path = os.path.abspath('') # Obtengo la carpeta actual para que el demonio no se pierda. 
         insert_GDA_process_daemon(self, tmp_file, dat_file, root_path)
 
-        
         return
 

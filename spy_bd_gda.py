@@ -333,8 +333,6 @@ class BDGDA:
         return True
 
     def insert_data(self, dlgid, data_line_list, tag='GDA'):  
-        import time 
-        time.sleep(10)    
         data = []
         keys = []
         # Parseo los datos
@@ -412,10 +410,10 @@ class BDGDA:
                 log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_online))
                 log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
                 return False            
+        
+            log(module=__name__, function='insert_data', dlgid=dlgid, msg='OK')            
 
-            log(module=__name__, function='insert_data', dlgid=dlgid, msg='OK')
             return True
-
         else: 
             log(module=__name__, function='insert_data', dlgid=dlgid, msg='ERROR No existe instalacion para este equipo.')
             return False
