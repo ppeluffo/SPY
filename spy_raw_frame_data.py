@@ -167,28 +167,6 @@ class RAW_DATA_frame:
         #                  ]
         #
 
-
-    def process_and_insert_lines_into_GDA(self):
-        # import time 
-        # time.sleep(10)
-        # self.data_line_list = [ DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
-        #                         DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
-        #                         DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
-        #                       ]
-        for line in self.data_line_list:
-            log(module=__name__, function='process_and_insert_lines_into_GDA', dlgid=self.dlgid, level='SELECT', msg='line={0}'.format(line))
-            d = u_dataline_to_dict(line)
-            #for key in d:
-            #    log(module=__name__, server='process', function='pprocess_and_insert_lines_into_GDA', level='SELECT', dlgid='PROC00',msg='key={0}, val={1}'.format(key, d[key]))
-
-            if not self.bd.insert_data_line(self.dlgid, d):
-                return False
-
-            if not self.bd.insert_data_online(self.dlgid,d):
-                return False
-
-        return True
-
     def process(self):
         # Realizo todos los pasos necesarios en el payload paragenerar la respuesta al datalooger e insertar los datos en GDA
         log(module=__name__, function='process', dlgid=self.dlgid, msg='START')
@@ -223,19 +201,19 @@ class RAW_DATA_frame:
         self.send_response()
 
         # Paso 6: Inserto las lineas en GDA.
-        if self.bd.insert_data(self.dlgid, self.data_line_list):
-            # Si salio bien renombro el archivo a .dat para que el process lo use
-            os.rename(tmp_file, dat_file)
-        else:
-            # Algo anduvo mal y no pude insertarlo en GDA
-            move_file_to_error_dir(tmp_file)
+        # if self.bd.insert_data(self.dlgid, self.data_line_list):
+        #     # Si salio bien renombro el archivo a .dat para que el process lo use
+        #     os.rename(tmp_file, dat_file)
+        # else:
+        #     # Algo anduvo mal y no pude insertarlo en GDA
+        #     move_file_to_error_dir(tmp_file)
 
         # p = Process(name='daemon_insert_gda',target=self.process_and_insert_lines_into_GDA())
         # p.daemon = True
         # p.start()
 
-        # root_path = os.path.abspath('') # Obtengo la carpeta actual para que el demonio no se pierda. 
-        # insert_GDA_process_daemon(self, tmp_file, dat_file, root_path)
+        root_path = os.path.abspath('') # Obtengo la carpeta actual para que el demonio no se pierda. 
+        insert_GDA_process_daemon(self, tmp_file, dat_file, root_path)
 
         
         return

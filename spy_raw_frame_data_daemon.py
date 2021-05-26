@@ -18,20 +18,7 @@ def process_and_insert_lines_into_GDA(dlgid, data_line_list):
     #                         DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
     #                         DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
     #   
-    bd = BDGDA( modo = Config['MODO']['modo'] )
-    bd.insert_data(dlgid, data_line_list)
-
-    # for line in data_line_list:
-    #     log(module=__name__, function='process_and_insert_lines_into_GDA', dlgid=dlgid, level='SELECT', msg='line={0}'.format(line))
-    #     d = u_dataline_to_dict(line)
-    #     #for key in d:
-    #     #    log(module=__name__, server='process', function='pprocess_and_insert_lines_into_GDA', level='SELECT', dlgid='PROC00',msg='key={0}, val={1}'.format(key, d[key]))
-
-    #     if not bd.insert_data_line(dlgid, d):
-    #         return False
-
-    #     if not bd.insert_data_online(dlgid,d):
-    #         return False
+    print(Config['MODO']['modo'])
 
 
     return True
@@ -39,9 +26,13 @@ def process_and_insert_lines_into_GDA(dlgid, data_line_list):
 def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):   
     # Paso el proceso a demonio.
     log(module=__name__, function='process', dlgid=dlgid, msg='Start Daemon')
+    
     with daemon.DaemonContext(): 
+        log(module=__name__, function='process', dlgid=dlgid, msg=Config['MODO']['modo'])
+        bd = BDGDA( modo = Config['MODO']['modo'] )
+        bd.connect()
         # Paso 6: Inserto las lineas en GDA.
-        if process_and_insert_lines_into_GDA(dlgid, data_line_list):
+        if bd.insert_data(dlgid, data_line_list):
             # Si salio bien renombro el archivo a .dat para que el process lo use
             shutil.move(tmp_file, dat_file)
         else:
@@ -49,7 +40,7 @@ def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):
             dirname, filename = os.path.split(tmp_file)
             errdirname = Config['PROCESS']['process_err_path']
             errfile = os.path.join(root_path,errdirname, filename)
-            log(module=__name__, server='processR1', function='move_file_to_error_dir', level='SELECT', dlgid=dlgid, msg='errfile={}'.format(errfile))
+            log(module=__name__, server='processR1', function='move_file_to_error_dir', dlgid=dlgid, msg='errfile={}'.format(errfile))
             shutil.move(tmp_file, errfile)        
 
         log(module=__name__, function='process', dlgid=dlgid, msg='End Daemon')

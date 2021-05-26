@@ -335,7 +335,6 @@ class BDGDA:
     def insert_data(self, dlgid, data_line_list, tag='GDA'):       
         data = []
         keys = []
-        
         # Parseo los datos
         for line in data_line_list:
             # Paso los datos a un diccionario con el formato correcto para la base.
