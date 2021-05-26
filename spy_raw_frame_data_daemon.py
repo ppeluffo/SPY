@@ -1,6 +1,6 @@
 #!/usr/bin/python3 -u
 
-from spy_log import log
+from spy_log import log, config_logger
 import os
 import sys
 from spy import Config
@@ -17,8 +17,9 @@ def process_and_insert_lines_into_GDA(dlgid, data_line_list):
     # self.data_line_list = [ DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
     #                         DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;,
     #                         DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
-    #                       ]
+    #   
     bd = BDGDA( modo = Config['MODO']['modo'] )
+    # bd.insert_data(dlgid, data_line_list)
 
     for line in data_line_list:
         log(module=__name__, function='process_and_insert_lines_into_GDA', dlgid=dlgid, level='SELECT', msg='line={0}'.format(line))
@@ -32,14 +33,13 @@ def process_and_insert_lines_into_GDA(dlgid, data_line_list):
         if not bd.insert_data_online(dlgid,d):
             return False
 
+
     return True
 
 def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):   
     # Paso el proceso a demonio.
-
+    log(module=__name__, function='process', dlgid=dlgid, msg='Start Daemon')
     with daemon.DaemonContext(): 
-        log(module=__name__, function='process', dlgid=dlgid, msg='Start Daemon')
-    
         # Paso 6: Inserto las lineas en GDA.
         if process_and_insert_lines_into_GDA(dlgid, data_line_list):
             # Si salio bien renombro el archivo a .dat para que el process lo use
