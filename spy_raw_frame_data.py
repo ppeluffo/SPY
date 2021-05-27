@@ -179,9 +179,13 @@ class RAW_DATA_frame:
 
         # Paso 3: Actualizo la REDIS con la ultima linea
         redis_db = Redis(self.dlgid)
+
         # Guardo la ultima linea en la redis
-        redis_db.insert_line(self.data_line_list[-1])
-        
+        try: 
+            redis_db.insert_line(self.data_line_list[-1])
+        except: 
+            log(module=__name__, function='process', dlgid=self.dlgid, msg='ERROR REDIS INSERT: len:{0}, line:{1}'.format(len(self.data_line_list), self.data_line_list))
+
         # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
         log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
         ##if redis_db.execute_callback():		# yosniel cabrera -> elimine la condicion de que preguntara por type en redis antes de llamar al callback
