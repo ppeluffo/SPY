@@ -505,6 +505,36 @@ class BDGDA:
         else:
             return True
 
+    def is_automatismo(self, dlgid, tag='GDA'):
+        log(module=__name__, server=self.server, function='is_automatismo', dlgid=dlgid, level='SELECT', msg='start')
+        if not self.connect():
+            log(module=__name__, server=self.server, function='is_automatismo', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
+            return False
+
+        sql = """SELECT id, dlgid, titulo, servicio_id
+	             FROM gda.automatismo WHERE dlgid== '{0}'""".format(dlgid)
+
+        try:
+            query = text(sql)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='is_automatismo', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
+            log(module=__name__, server=self.server, function='is_automatismo', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            return False
+
+        d = dict()
+        try:
+            rp = self.conn.execute(query)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='is_automatismo', dlgid=dlgid,msg='ERROR: GDA exec EXCEPTION {}'.format(err_var))
+            return False
+
+        results = rp.fetchall()
+        d = dict()
+        for row in results:
+            return True
+
+        return False
+
 class BDGDA_TAHONA(BDGDA):
 
     def __init__(self, modo='local',server='comms'):
