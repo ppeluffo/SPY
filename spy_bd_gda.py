@@ -511,8 +511,7 @@ class BDGDA:
             log(module=__name__, server=self.server, function='is_automatismo', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
             return False
 
-        sql = """SELECT id, dlgid, titulo, servicio_id
-	             FROM gda.automatismo WHERE dlgid== '{0}'""".format(dlgid)
+        sql = """SELECT id FROM gda.automatismo WHERE dlgid='{0}'""".format(dlgid)
 
         try:
             query = text(sql)
