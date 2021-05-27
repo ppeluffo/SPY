@@ -12,6 +12,7 @@ from spy_process import move_file_to_error_dir
 from multiprocessing import Process
 
 from spy_raw_frame_data_daemon import insert_GDA_process_daemon
+from spy_raw_frame_callbacks_daemon import callbacks_process_daemon
 import signal
 
 # ------------------------------------------------------------------------------
@@ -79,42 +80,41 @@ class RAW_DATA_frame:
         except Exception as e:
             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg=str(e))
 
-
-    def process_callbacks(self):
+    # def process_callbacks(self):
         
-        log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACK ==> START')
+    #     log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACK ==> START')
         
-        def run_program():
-            os.system('{0} {1}'.format(CBK,self.dlgid))
-            #os.execl(CBK, PROGRAM, self.dlgid)
+    #     def run_program():
+    #         os.system('{0} {1}'.format(CBK,self.dlgid))
+    #         #os.execl(CBK, PROGRAM, self.dlgid)
             
-        def end_time(process,time):
-            p = Process(target=process,args ='')
-            p.start()
-            p.join(time)
-            if p.is_alive():
-                p.terminate()
-                log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> EJECUCION INTERRUMPIDA POR TIMEOUT')
+    #     def end_time(process,time):
+    #         p = Process(target=process,args ='')
+    #         p.start()
+    #         p.join(time)
+    #         if p.is_alive():
+    #             p.terminate()
+    #             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> EJECUCION INTERRUMPIDA POR TIMEOUT')
                 
-        # PREPARO ARGUMENTOS
-        try:
-            PATH = Config['CALLBACKS_PATH']['cbk_path']
-            PROGRAM = Config['CALLBACKS_PROGRAM']['cbk_program']
-            CBK = os.path.join(PATH, PROGRAM)
-            #
-            log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALL_BACKS ==> {0} {1}]'.format(CBK,self.dlgid))
-            # EJECUTO CALLBACKS SI LAS VARIABLES PATH y PROGRAM TIENEN VALORES COHERENTES
-            if bool(PROGRAM) & bool(PATH):
-                # EJECUTO EL CALLBACKS CON TIEMPO MAXIMO DE EJECUCION DE 1 s
-                end_time(run_program,1)
-            else: 
-                log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> [PATH = {0}],[PROGRAM = {1}'.format(PATH,PROGRAM))
-                log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> INTERRUMPIDO')
+    #     # PREPARO ARGUMENTOS
+    #     try:
+    #         PATH = Config['CALLBACKS_PATH']['cbk_path']
+    #         PROGRAM = Config['CALLBACKS_PROGRAM']['cbk_program']
+    #         CBK = os.path.join(PATH, PROGRAM)
+    #         #
+    #         log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALL_BACKS ==> {0} {1}]'.format(CBK,self.dlgid))
+    #         # EJECUTO CALLBACKS SI LAS VARIABLES PATH y PROGRAM TIENEN VALORES COHERENTES
+    #         if bool(PROGRAM) & bool(PATH):
+    #             # EJECUTO EL CALLBACKS CON TIEMPO MAXIMO DE EJECUCION DE 1 s
+    #             end_time(run_program,1)
+    #         else: 
+    #             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> [PATH = {0}],[PROGRAM = {1}'.format(PATH,PROGRAM))
+    #             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> INTERRUMPIDO')
         
-        except:
-            log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> ERROR A LEER cbk vars de spy.conf')
+    #     except:
+    #         log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> ERROR A LEER cbk vars de spy.conf')
     
-        log(module=__name__, function='process', dlgid=self.dlgid, msg='CALLBACK ==> END')
+    #     log(module=__name__, function='process', dlgid=self.dlgid, msg='CALLBACK ==> END')
         
 
     def save_payload_in_file(self):
@@ -189,7 +189,9 @@ class RAW_DATA_frame:
         # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
         log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
         ##if redis_db.execute_callback():		# yosniel cabrera -> elimine la condicion de que preguntara por type en redis antes de llamar al callback
-        self.process_callbacks()
+        # self.process_callbacks()
+        log(module=__name__, function='process', dlgid=self.dlgid, msg='Start CallBacks Daemon')
+        callbacks_process_daemon(self)
 
         # Paso 5: Preparo la respuesta y la envio al datalogger
         # Mando el line_id de la ultima linea recibida
