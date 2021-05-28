@@ -9,7 +9,7 @@ from spy import Config
 from collections import defaultdict
 from spy_log import log
 from spy_utils import u_dataline_to_dict
-import datetime as dt 
+from datetime import datetime as dt 
 import pandas as pd
 #import MySQLdb
 
@@ -337,10 +337,10 @@ class BDGDA:
         keys = []
         # Parseo los datos
         for line in data_line_list:
+            valid = True
             # Paso los datos a un diccionario con el formato correcto para la base.
             d = u_dataline_to_dict(line)
             data.append(d)
-
             #  Armo un diccionario con las claves de cada medida.
             nkeys = [ k for k in d if k not in (['timestamp', 'RCVDLINE'] + keys) ]
             keys = keys + nkeys        
@@ -378,40 +378,78 @@ class BDGDA:
         # Si existe el dlg quiere decir que hay medidas asociadas y una instalacion. 
         # En caso contrario seguramente hay medidas asociadas pero no una instalacion.
         if ubicacion_id:
-            # Se arma una unica consulta y al final se agregra ON CONFLICT DO NOTHING que en caso de datos duplicados o 
-            # problemas con las fechas descarta la inserción del dato erroneo.
+            # Se arma una unica consulta y al final se agregra ON CONFLICT DO NOTHING que en caso de datos duplicados  
+            # descarta la inserción del dato erroneo.
             sql_insert = """INSERT INTO spx_datos( \
             fechasys, fechadata, valor, medida_id, ubicacion_id) \
             VALUES \
             """
+            sql_insert_online = ""            
+            lastdate = False
             for d in data:
+                #  Controlo que la fecha sea correcta
+                chkdate = False
+                try: 
+                    chkdate = dt.strptime(d['timestamp'], '%Y-%m-%d %H:%M:%S')
+                    if chkdate > dt.now():
+                        log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR invalid date: {0}'.format(d['timestamp']))
+                        continue
+                except: 
+                    continue
+
                 for m in tp:     
                     if m in d:
-                        sql_insert += "( now(), '{0}', {1}, {2}, {3}),".format(d['timestamp'],d[m], tp[m], ubicacion_id)
-            
+                        valid = True
+                        try: 
+                            if(d[m].lower() != 'inf' and d[m].lower() != 'nan'):
+                                float(d[m])
+                            else: 
+                                valid = False
+                                continue
+                        except: 
+                            valid = False
+                            continue
+                            
+                        # Controlo que valor sea un valor numerico
+                        if(valid):
+                            sql_insert += "( now(), '{0}', {1}, {2}, {3}),".format(d['timestamp'],d[m].strip(), tp[m], ubicacion_id)
+
+                            if chkdate and not lastdate: lastdate = chkdate
+                            if chkdate >= lastdate: 
+                                sql_insert_online = """INSERT INTO spx_online( \
+                                fechasys, fechadata, valor, medida_id, ubicacion_id) \
+                                VALUES \
+                                ( now(), '{0}', {1}, {2}, {3}) ON CONFLICT DO NOTHING""".format(d['timestamp'],d[m].strip(), tp[m], ubicacion_id)
+                                lastdate = chkdate
+                        else:
+                            log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR invalid value: {0}'.format(d[m]))
+                            continue
+
             sql_insert = sql_insert[:-1] + ' ON CONFLICT DO NOTHING'
 
             # Inserto en spx_datos
             try:
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, level='SELECT', msg='SQLQUERY DATA: {0}'.format(sql_insert))
                 query = text(sql_insert)
                 self.conn.execute(query) 
             except Exception as err_var:
-                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_data))
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_insert))
                 log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
                 return False
 
+            log(module=__name__, function='insert_data', dlgid=dlgid, msg='insert data OK')
+
             # Inserto en spx_online
-            # Se usa la misma consulta pero se cambia spx_datos por spx_online
             try:
-                sql_online = sql_insert.replace('spx_datos', 'spx_online',1)
-                query = text(sql_online)
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, level='SELECT', msg='SQLQUERY ONLINE: {0}'.format(sql_insert_online))
+                query = text(sql_insert_online)
                 self.conn.execute(query) 
             except Exception as err_var:
-                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_online))
+                log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql_insert_online))
                 log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
                 return False            
         
-            log(module=__name__, function='insert_data', dlgid=dlgid, msg='OK')            
+            log(module=__name__, function='insert_data', dlgid=dlgid, msg='insert online OK')            
 
             return True
         else: 
