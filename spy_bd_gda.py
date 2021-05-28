@@ -9,7 +9,7 @@ from spy import Config
 from collections import defaultdict
 from spy_log import log
 from spy_utils import u_dataline_to_dict
-from datetime import datetime as dt 
+from datetime import datetime as dt, timedelta 
 import pandas as pd
 #import MySQLdb
 
@@ -391,7 +391,7 @@ class BDGDA:
                 chkdate = False
                 try: 
                     chkdate = dt.strptime(d['timestamp'], '%Y-%m-%d %H:%M:%S')
-                    if chkdate > dt.now():
+                    if chkdate >  ( dt.now() + timedelta(minutes=5) ):
                         log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR invalid date: {0}'.format(d['timestamp']))
                         continue
                 except: 
