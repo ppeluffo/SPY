@@ -413,14 +413,6 @@ class BDGDA:
                         # Controlo que valor sea un valor numerico
                         if(valid):
                             sql_insert += "( now(), '{0}', {1}, {2}, {3}),".format(d['timestamp'],d[m].strip(), tp[m], ubicacion_id)
-
-                            if chkdate and not lastdate: lastdate = chkdate
-                            if chkdate >= lastdate: 
-                                sql_insert_online = """INSERT INTO spx_online( \
-                                fechasys, fechadata, valor, medida_id, ubicacion_id) \
-                                VALUES \
-                                ( now(), '{0}', {1}, {2}, {3}) ON CONFLICT DO NOTHING""".format(d['timestamp'],d[m].strip(), tp[m], ubicacion_id)
-                                lastdate = chkdate
                         else:
                             log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR invalid value: {0}'.format(d[m]))
                             continue
@@ -440,7 +432,9 @@ class BDGDA:
             log(module=__name__, function='insert_data', dlgid=dlgid, msg='insert data OK')
 
             # Inserto en spx_online
+            # La consulta es igual a la anterior solo que se cambia la tabla spx_datos por spx_online 
             try:
+                sql_insert_online = sql_insert.replace('spx_datos', 'spx_online', 1)
                 log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, level='SELECT', msg='SQLQUERY ONLINE: {0}'.format(sql_insert_online))
                 query = text(sql_insert_online)
                 self.conn.execute(query) 
