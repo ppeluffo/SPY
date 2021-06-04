@@ -5,10 +5,18 @@ from sqlalchemy import create_engine
 from sqlalchemy import text
 import pandas as pd
 import datetime as dt
-engine = create_engine('postgresql+psycopg2://admin:pexco599@192.168.0.6/GDA', pool_recycle=3600, pool_size = 5)
+from spy_config import Config
+
+engine = create_engine(Config['BDATOS']['url_gda_spymovil'], pool_recycle=3600, pool_size = 5)
 conn = engine.connect()
 
 
+# Elimino todos los NaN. 
+sql = "DELETE FROM spx_online WHERE valor = 'NaN'"
+query = text(sql)
+conn.execute(query)
+
+# Cargo todo en spx_online
 sql = "SELECT * FROM spx_online"
 df = pd.read_sql_query(sql, conn)
 df.set_index('id', inplace=True)
@@ -26,11 +34,6 @@ for i, row in df_error.iterrows():
         
     query = text(sql)
     conn.execute(query)
-
-# Elimino todos los NaN. 
-sql = "DELETE FROM spx_online WHERE valor = 'NaN'"
-query = text(sql)
-conn.execute(query
 
 # Eliminar los datos viejos en online.
 
