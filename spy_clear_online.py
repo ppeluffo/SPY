@@ -27,6 +27,11 @@ for i, row in df_error.iterrows():
     query = text(sql)
     conn.execute(query)
 
+# Elimino todos los NaN. 
+sql = "DELETE FROM spx_online WHERE valor = 'NaN'"
+query = text(sql)
+conn.execute(query
+
 # Eliminar los datos viejos en online.
 
 df.sort_values(['medida_id','ubicacion_id', 'fechadata'], inplace=True)
