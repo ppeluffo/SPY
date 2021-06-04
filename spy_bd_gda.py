@@ -416,8 +416,6 @@ class BDGDA:
                             log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR invalid value: {0}'.format(d[m]))
                             continue
 
-                        log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='SQL: {0}'.format(sql_insert))
-
             sql_insert = sql_insert[:-1] + ' ON CONFLICT DO NOTHING'
 
             # Inserto en spx_datos
