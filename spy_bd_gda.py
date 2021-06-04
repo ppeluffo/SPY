@@ -388,7 +388,6 @@ class BDGDA:
             lastdate = False
             for d in data:
                 #  Controlo que la fecha sea correcta
-                chkdate = False
                 try: 
                     chkdate = dt.strptime(d['timestamp'], '%Y-%m-%d %H:%M:%S')
                     if chkdate >  ( dt.now() + timedelta(minutes=5) ):
@@ -401,7 +400,7 @@ class BDGDA:
                     if m in d:
                         valid = True
                         try: 
-                            if(d[m].lower() != 'inf' and d[m].lower() != 'nan'):
+                            if(d[m].lower() != 'inf'):
                                 float(d[m])
                             else: 
                                 valid = False
@@ -412,10 +411,12 @@ class BDGDA:
                             
                         # Controlo que valor sea un valor numerico
                         if(valid):
-                            sql_insert += "( now(), '{0}', {1}, {2}, {3}),".format(d['timestamp'],d[m].strip(), tp[m], ubicacion_id)
+                            sql_insert += "( now(), '{0}', '{1}', {2}, {3}),".format(d['timestamp'],d[m].strip(), tp[m], ubicacion_id)
                         else:
                             log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='ERROR invalid value: {0}'.format(d[m]))
                             continue
+
+                        log(module=__name__, server=self.server, function='insert_data', dlgid=dlgid, msg='SQL: {0}'.format(sql_insert))
 
             sql_insert = sql_insert[:-1] + ' ON CONFLICT DO NOTHING'
 
@@ -543,7 +544,7 @@ class BDGDA:
             log(module=__name__, server=self.server, function='is_automatismo', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
             return False
 
-        sql = """SELECT id FROM gda.automatismo WHERE dlgid='{0}'""".format(dlgid)
+        sql = """SELECT id FROM automatismo WHERE dlgid='{0}'""".format(dlgid)
 
         try:
             query = text(sql)
