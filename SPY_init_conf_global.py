@@ -10,7 +10,7 @@ Host: www.spymovil.com
 
 
 from spy_log import log
-from spy_utils import u_send_response,  u_get_fw_version
+from spy_utils import u_send_response,  u_get_fw_version, u_convert_fw_version_to_str
 from datetime import datetime
 import os
 import cgi
@@ -46,6 +46,7 @@ class INIT_CONF_GLOBAL:
     def __init__(self, dlgid, version, payload_dict, dlgbdconf_dict):
         self.dlgid = dlgid
         self.version = version
+        self.fw_version = u_convert_fw_version_to_str(self.version)
         self.payload_dict = payload_dict
         self.dlgbdconf_dict = dlgbdconf_dict
         self.response_pload = 'CLOCK:{}'.format(datetime.now().strftime('%y%m%d%H%M'))
@@ -139,26 +140,27 @@ class INIT_CONF_GLOBAL:
             if a != b:
                 self.response_pload += ';COUNTERS'
 
-            # chechsum parametros range
-            a = int(self.payload_dict.get('RG', '0'),16)
-            b = self.PV_checksum_range(self.dlgbdconf_dict)
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_RANGE: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-            if a != b:
-                self.response_pload += ';RANGE'
+            if self.fw_version < 400:
+                # chechsum parametros range
+                a = int(self.payload_dict.get('RG', '0'),16)
+                b = self.PV_checksum_range(self.dlgbdconf_dict)
+                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_RANGE: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+                if a != b:
+                    self.response_pload += ';RANGE'
 
-            # chechsum parametros psensor
-            a = int(self.payload_dict.get('PSE', '0'),16)
-            b = self.PV_checksum_psensor(self.dlgbdconf_dict)
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-            if a != b:
-                self.response_pload += ';PSENSOR'
+                # chechsum parametros psensor
+                a = int(self.payload_dict.get('PSE', '0'),16)
+                b = self.PV_checksum_psensor(self.dlgbdconf_dict)
+                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+                if a != b:
+                    self.response_pload += ';PSENSOR'
 
-            # chechsum parametros aplicacion
-            a = int(self.payload_dict.get('APP', '0'), 16)
-            b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-            if a != b:
-                self.response_pload += ';APLICACION'
+                # chechsum parametros aplicacion
+                a = int(self.payload_dict.get('APP', '0'), 16)
+                b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
+                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+                if a != b:
+                    self.response_pload += ';APLICACION'
 
             self.send_response()
 
@@ -218,7 +220,10 @@ class INIT_CONF_GLOBAL:
         # Debo hacerlo igual a como lo hago en el datalogger.
         cks_str = ''
 
-        if fw_version >= 304:
+        if fw_version >= 400:
+            cks_str = '{0},{1},{2},{3},'.format(timerdial, timerpoll, timepwrsensor, counters_hw )
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        elif fw_version >= 304:
             cks_str = '{0},{1},{2},{3},{4},{5},{6},{7},'.format(timerdial, timerpoll, timepwrsensor, pwrs_modo, pwrs_start,  pwrs_end, counters_hw, bateria)
             cks = self.PV_calcular_hash_checksum(cks_str)
         elif fw_version >= 300:
@@ -278,7 +283,11 @@ class INIT_CONF_GLOBAL:
                 cks_str += '{}:X,NORMAL;'.format(ch_id)
 
         fw_version = u_get_fw_version(self.dlgbdconf_dict)
-        if fw_version >= 300:
+
+        if fw_version >= 400:
+            cks_str += 'D0:%s;D1:%s;' % ( d.get(('D0', 'NAME'),'DX'),  d.get(('D1', 'NAME'),'DX') )
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        elif fw_version >= 300:
             cks = self.PV_calcular_hash_checksum(cks_str)
         else:
             cks = self.PV_calcular_ckechsum(cks_str)

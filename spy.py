@@ -1,3 +1,4 @@
+#!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 #!/usr/bin/python3 -u
 """
 Version 1.1 @ 2021-03-16
@@ -85,6 +86,7 @@ def print_error():
      
      DEBUG_CTL_SCAN
      DEBUG_DATA
+     DEBUG_TEST
        
      ''')
     exit(1)
@@ -198,6 +200,12 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'DEBUG_CONF_PILOTO':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_conf_app_piloto']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_TEST':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_test']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 

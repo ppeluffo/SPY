@@ -53,5 +53,10 @@ class RAW_frame:
             from spy_raw_frame_data import RAW_DATA_frame
             raw_data_frame = RAW_DATA_frame(dlgid, version, payload_str)
             raw_data_frame.process()
-
+            
+        elif tipo_frame == 'TEST':
+            log(module=__name__, function='process', dlgid=dlgid, level='INFO', msg='TESTING')
+            from spy_raw_frame_test import RAW_TEST_frame
+            raw_test_frame = RAW_TEST_frame()
+            raw_test_frame.process()
         return

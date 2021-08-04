@@ -109,3 +109,17 @@ def u_get_fw_version(d):
     rev_menor = int(l[2][0])
     version = int(rev_mayor)*100 + int(rev_media)*10 + int(rev_menor)
     return version
+
+def u_convert_fw_version_to_str( str_version ):
+    '''
+    Dado el campo d{'BASE','FIRMWARE'} que es del tipo 2.0.3a, lo convierte a 203
+    de modo que pueda determinar numericamente la version en comparaciones
+    '''
+    l= str_version.split('.')
+    if len(l) < 3:
+        l = [ '2','0','0']
+    rev_mayor = int(l[0])
+    rev_media = int(l[1])
+    rev_menor = int(l[2][0])
+    version = int(rev_mayor)*100 + int(rev_media)*10 + int(rev_menor)
+    return version

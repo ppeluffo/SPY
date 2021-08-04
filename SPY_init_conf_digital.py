@@ -7,7 +7,7 @@ Created on Wed Aug  7 20:51:49 2019
 """
 
 from spy_log import log
-from spy_utils import u_send_response
+from spy_utils import u_send_response, u_convert_fw_version_to_str
 
 # ------------------------------------------------------------------------------
 
@@ -21,6 +21,7 @@ class INIT_CONF_DIGITAL:
     def __init__(self, dlgid, version, dconf):
         self.dlgid = dlgid
         self.version = version
+        self.fw_version = u_convert_fw_version_to_str(version)
         self.dconf = dconf
         self.response = ''
 
@@ -28,6 +29,9 @@ class INIT_CONF_DIGITAL:
             self.name = dconf.get((ch, 'NAME'), 'X')
             self.modo = dconf.get((ch, 'MODO'), 'NORMAL')
             self.response += '{0}:{1},{2};'.format( ch, self.name, self.modo )
+
+        if self.fw_version >= 400:
+            self.response = 'D0:{0};D1:{1}'.format( dconf.get(('D0', 'NAME'), 'X'), dconf.get(('D1', 'NAME'), 'X'))
 
         return
 
