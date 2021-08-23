@@ -33,7 +33,6 @@ class INIT_CONF_COUNTER:
             else:
                 self.response += '{0}:{1},{2},{3},{4},{5},{6};'.format( ch, self.name, self.magpp, self.pwidth, self.period, self.speed,self.edge )
 
-
         return
 
     def process(self):

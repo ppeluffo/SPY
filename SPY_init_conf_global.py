@@ -140,6 +140,13 @@ class INIT_CONF_GLOBAL:
             if a != b:
                 self.response_pload += ';COUNTERS'
 
+            # chechsum parametros aplicacion
+            a = int(self.payload_dict.get('APP', '0'), 16)
+            b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';APLICACION'
+
             if self.fw_version < 400:
                 # chechsum parametros range
                 a = int(self.payload_dict.get('RG', '0'),16)
@@ -269,6 +276,7 @@ class INIT_CONF_GLOBAL:
         # Pueden faltar algunos que no usemos por lo que no esten definidos.
         # D0:D0,TIMER;D1:D1,NORMAL;
         cks_str = ''
+        cks = 0
         nro_digital_channels = int(self.payload_dict.get('NDCH', '0'))
         for ch in range(nro_digital_channels):
             ch_id = 'D{}'.format(ch)            # ch_id = D1
@@ -282,10 +290,10 @@ class INIT_CONF_GLOBAL:
             else:
                 cks_str += '{}:X,NORMAL;'.format(ch_id)
 
-        fw_version = u_get_fw_version(self.dlgbdconf_dict)
 
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
         if fw_version >= 400:
-            cks_str += 'D0:%s;D1:%s;' % ( d.get(('D0', 'NAME'),'DX'),  d.get(('D1', 'NAME'),'DX') )
+            cks_str = 'D0:%s;D1:%s;' % ( d.get(('D0', 'NAME'),'X'),  d.get(('D1', 'NAME'),'X') )
             cks = self.PV_calcular_hash_checksum(cks_str)
         elif fw_version >= 300:
             cks = self.PV_calcular_hash_checksum(cks_str)
@@ -309,7 +317,17 @@ class INIT_CONF_GLOBAL:
             ch_id = 'C{}'.format(ch)            # ch_id = C1
             modo = ''
 
-            if fw_version >= 301:
+            if fw_version >= 400:
+                if (ch_id, 'NAME') in d.keys():
+                    cks_str += '%s:%s,%.03f,%d,%d,%s;' % (ch_id, d.get((ch_id, 'NAME'), 'CX'), float(d.get((ch_id, 'MAGPP'), '0')), int(d.get((ch_id, 'PERIOD'), '0')), int(d.get((ch_id, 'PWIDTH'), '0')),d.get((ch_id, 'EDGE'), 'RISE'))
+                    modo = '400/BD'
+                else:
+                    cks_str += '{}:X,0.100,100,10,RISE;'.format(ch_id)
+                    modo = '400/DEFAULT'
+
+                cks = self.PV_calcular_hash_checksum(cks_str)
+
+            elif fw_version >= 301:
                 if (ch_id, 'NAME') in d.keys():
                     cks_str += '%s:%s,%.03f,%d,%d,%s,%s;' % (ch_id, d.get((ch_id, 'NAME'), 'CX'), float(d.get((ch_id, 'MAGPP'), '0')), int(d.get((ch_id, 'PERIOD'), '0')), int(d.get((ch_id, 'PWIDTH'), '0')),d.get((ch_id, 'SPEED'), 'LS'),d.get((ch_id, 'EDGE'), 'RISE'))
                     modo = '301/BD'
