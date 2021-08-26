@@ -81,7 +81,11 @@ class INIT_CONF_APP:
         self.response = "PILOTO;"
         hhmm_default = 0
         presion_default = 0
-
+        #
+        pulseXrev =  int(self.dconf.get(('PILOTO', 'PulseXrev'), 3000))
+        pwidth = int(self.dconf.get(('PILOTO', 'pwidth'), 20))
+        self.response += 'PPR:%d;PWIDTH:%d;' % (pulseXrev, pwidth)
+        #
         hhmm0 = int(self.dconf.get(('PILOTO', 'HHMM0'), hhmm_default))
         if hhmm0 == '':
             hhmm0 = hhmm_default
