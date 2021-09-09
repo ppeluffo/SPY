@@ -1,4 +1,3 @@
-#!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 #!/usr/bin/python3 -u
 """
 Version 1.1 @ 2021-03-16
