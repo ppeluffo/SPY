@@ -140,6 +140,13 @@ class INIT_CONF_GLOBAL:
             if a != b:
                 self.response_pload += ';COUNTERS'
 
+            # chechsum parametros modbus
+            a = int(self.payload_dict.get('MB','0'), 16)
+            b = self.PV_checksum_modbus(self.dlgbdconf_dict)
+            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+            if a != b:
+                self.response_pload += ';MBUS_LOW;MBUS_MED;MBUS_HIGH;'
+
             # chechsum parametros aplicacion
             a = int(self.payload_dict.get('APP', '0'), 16)
             b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
@@ -267,7 +274,7 @@ class INIT_CONF_GLOBAL:
         else:
             cks = self.PV_calcular_ckechsum(cks_str)
 
-        log(module=__name__, function='PV_checksum_analog', dlgid=self.dlgid, level='SELECT', msg='CKS_AN ({0}ch): [{1}][{2}]'.format(nro_analog_channels, cks_str,hex(cks)))
+        log(module=__name__, function='PV_checksum_analog', dlgid=self.dlgid, level='SELECT', msg='CKS_AN ({0}ch): [{1}][{2}]'.format(nro_analog_channels, cks_str, hex(cks)))
         return cks
 
 
@@ -422,6 +429,39 @@ class INIT_CONF_GLOBAL:
         log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT', msg='CKS_APLICACION: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
 
+
+    def PV_checksum_modbus(self, d):
+        # chechsum parametros modbus
+        # MODBUS;SLA:%04d;MBWT:%03d;
+        cks_str = 'MODBUS;SLA:%04d;' % int(d.get(('BASE', 'MBUS_SLAVE_ADDR'), '0'))
+        cks_str += 'MBWT:%03d;' % int(d.get(('BASE', 'MBUS_WAITTIME'), '1'))
+        data_format = d.get(('BASE', 'MBUS_FORMAT'), 'KINCO')
+        cks_str += 'FORMAT:{};'.format(data_format)
+
+        for ch in range(0,20):
+            mbname = 'M{}'.format(ch)
+            name = d.get((mbname, 'NAME'), 'X')
+            addr = int(d.get((mbname, 'ADDR'), '0'))
+            size = int(d.get((mbname, 'SIZE'), '1'))
+            fcode = int(d.get((mbname, 'FCODE'), '3'))
+            tipo = d.get((mbname, 'TYPE'), 'U16')
+            pow10 = int(d.get((mbname, 'POW10'), '0'))
+            #print('name={0}, addr={1}, size={2}, fcode={3}, tipo={4}, pow10={5}'.format(name,addr,size,fcode,tipo, pow10 ))
+            if tipo == 'U16':
+                cks_str += 'MB%02d:%s,%04d,%02d,%02d,U16,%02d;' % (ch, name, addr, size, fcode, pow10)
+            elif tipo == 'I16':
+                cks_str += 'MB%02d:%s,%04d,%02d,%02d,I16,%02d;' % (ch, name, addr, size, fcode, pow10)
+            elif tipo == 'U32':
+                cks_str += 'MB%02d:%s,%04d,%02d,%02d,U32,%02d;' % (ch, name, addr, size, fcode, pow10)
+            elif tipo == 'I32':
+                cks_str += 'MB%02d:%s,%04d,%02d,%02d,I32,%02d;' % (ch, name, addr, size, fcode, pow10)
+            elif tipo == 'FLOAT':
+                cks_str += 'MB%02d:%s,%04d,%02d,%02d,FLOAT,%02d;' % (ch, name, addr, size, fcode, pow10)
+
+        #print('DEBUG:{}'.format(cks_str))
+        cks = self.PV_calcular_hash_checksum(cks_str)
+        log(module=__name__, function='PV_checksum_modbus', dlgid=self.dlgid, level='SELECT', msg='CKS_MB: [{0}][{1}]'.format( cks_str,hex(cks) ) )
+        return cks
 
     def PV_checksum_str_app_off(self,d):
         cks_str = 'OFF'

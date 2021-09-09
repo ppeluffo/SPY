@@ -127,6 +127,24 @@ class RAW_INIT_frame:
             init_conf_modbus.process()
             return
 
+        if payload_class == 'CONF_MBUS_LOW':
+            from SPY_init_conf_modbus import INIT_CONF_MBUS_LOW
+            init_conf_modbus = INIT_CONF_MBUS_LOW(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_modbus.process()
+            return
+
+        if payload_class == 'CONF_MBUS_MED':
+            from SPY_init_conf_modbus import INIT_CONF_MBUS_MED
+            init_conf_modbus = INIT_CONF_MBUS_MED(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_modbus.process()
+            return
+
+        if payload_class == 'CONF_MBUS_HIGH':
+            from SPY_init_conf_modbus import INIT_CONF_MBUS_HIGH
+            init_conf_modbus = INIT_CONF_MBUS_HIGH(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_modbus.process()
+            return
+
         if payload_class == 'CONF_PILOTO_SLOTS':
             from SPY_init_conf_piloto_slots import INIT_CONF_PILOTO_SLOTS
             init_conf_piloto_slots = INIT_CONF_PILOTO_SLOTS(self.dlgid, self.version, dlgbdconf_dict)

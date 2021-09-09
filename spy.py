@@ -82,6 +82,9 @@ def print_error():
      DEBUG_CONF_PPOT_SMS
      DEBUG_CONF_PPOT_LEVELS
      DEBUG_CONF_MODBUS
+     DEBUG_CONF_MBUS_LOW
+     DEBUG_CONF_MBUS_MED
+     DEBUG_CONF_MBUS_HIGH
      DEBUG_CONF_PILOTO
      
      DEBUG_CTL_SCAN
@@ -194,6 +197,24 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'DEBUG_CONF_MODBUS':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_conf_app_modbus']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_MBUS_LOW':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_mbus_low']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_MBUS_MED':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_mbus_med']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_MBUS_HIGH':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_mbus_high']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 
