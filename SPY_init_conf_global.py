@@ -545,25 +545,15 @@ class INIT_CONF_GLOBAL:
 
     def PV_checksum_str_app_piloto(self, d):
         # header
-        plt_hhmm0 = int(d.get(('PILOTO', 'HHMM0'), '0000'))
-        plt_pres0 = float(d.get(('PILOTO', 'P0'), '0'))
-        plt_hhmm1 = int(d.get(('PILOTO', 'HHMM1'), '0000'))
-        plt_pres1 = float(d.get(('PILOTO', 'P1'), '0'))
-        plt_hhmm2 = int(d.get(('PILOTO', 'HHMM2'), '0000'))
-        plt_pres2 = float(d.get(('PILOTO', 'P2'), '0'))
-        plt_hhmm3 = int(d.get(('PILOTO', 'HHMM3'), '0000'))
-        plt_pres3 = float(d.get(('PILOTO', 'P3'), '0'))
-        plt_hhmm4 = int(d.get(('PILOTO', 'HHMM4'), '0000'))
-        plt_pres4 = float(d.get(('PILOTO', 'P4'), '0'))
-
-        cks_str = 'PLT;SLOT0:%04d,%.02f;' % (plt_hhmm0, plt_pres0)
-        cks_str += 'SLOT1:%04d,%.02f;' % (plt_hhmm1, plt_pres1)
-        cks_str += 'SLOT2:%04d,%.02f;' % (plt_hhmm2, plt_pres2)
-        cks_str += 'SLOT3:%04d,%.02f;' % (plt_hhmm3, plt_pres3)
-        cks_str += 'SLOT4:%04d,%.02f;' % (plt_hhmm4, plt_pres4)
-        # print('DEBUG_HASH_APP-[{}]'.format(cks_str))
-        # cks = self.PV_calcular_hash_checksum(cks_str)
-        # print('DEBUG: CKS={}'.format( hex(cks)))
+        pxr = int(d.get(('PILOTO', 'PulseXrev'), '0000'))
+        pwidth = int(d.get(('PILOTO', 'pwidth'), '00'))
+        cks_str = 'PLT;PXR:%d;PWIDTH:%d;' % (pxr, pwidth)
+        for slot in range(0,12):
+            sHHMM = 'HHMM{}'.format(slot)
+            hhmm =  int(d.get(('PILOTO', sHHMM), '0000'))
+            sPRES = 'P{}'.format(slot)
+            pres = float(d.get(('PILOTO', sPRES), '0'))
+            cks_str += 'SLOT%d:%04d,%.02f;' % (slot, hhmm, pres)
         return cks_str
 
 
@@ -582,7 +572,6 @@ class INIT_CONF_GLOBAL:
             else:
                 tipo = 'I'
             cks_str += '%s:%s,%04d,%02d,%02d,%c;' % (ch, name, addr, size, fcode, tipo)
-
         return cks_str
 
 

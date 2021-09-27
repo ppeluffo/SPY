@@ -1,7 +1,11 @@
 #!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 #!/usr/bin/python3 -u
 """
-Version 1.1 @ 2021-03-16
+
+Version 2.0 @ 2021-09-24
+- Corrijo bug de fork al procesar datos.
+- Modifico el sistema de configuracion de pilotos para soportar 12 consignas
+- Permito que en las respuestas a datos se mande una nueva presion a fijar momentaneamente por el piloto
 
 Ref:
     Consulta sql sin resultados
