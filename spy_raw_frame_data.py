@@ -34,13 +34,11 @@ class RAW_DATA_frame:
         log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
         return
 
-
     def send_response(self):
         pload = '{}'.format(self.response_pload)
         u_send_response('DATA', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
-
 
     def process_commited_conf(self):
         '''
@@ -54,7 +52,6 @@ class RAW_DATA_frame:
         if (commited_conf == 1) and ('RESET' not in self.response_pload):
             self.response_pload += 'RESET;'
             self.bd.clear_commited_conf(dlgid=self.dlgid)
-
 
     def process_callbacks_old(self):
         #log(module=__name__, function='process_callbacks', dlgid=self.dlgid, level='SELECT',msg='CALLBACK start')
@@ -115,7 +112,6 @@ class RAW_DATA_frame:
     #         log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> ERROR A LEER cbk vars de spy.conf')
     
     #     log(module=__name__, function='process', dlgid=self.dlgid, msg='CALLBACK ==> END')
-        
 
     def save_payload_in_file(self):
         # Guarda el payload en un archivo para que luego lo procese el 'process'
@@ -138,7 +134,6 @@ class RAW_DATA_frame:
         #os.rename(tmp_file, dat_file)
 
         return (tmp_file, dat_file)
-
 
     def split_code_and_data_lists(self):
         # A partir del payload genera 2 listas: la de id y la de data
@@ -194,20 +189,27 @@ class RAW_DATA_frame:
             log(module=__name__, function='process', dlgid=self.dlgid, msg='Start CallBacks Daemon')
             callbacks_process_daemon(self)
 
-        # Paso 5: Preparo la respuesta y la envio al datalogger
+        # Paso 5: Veo si debo hacer un broadcast a remotos
+        #log(module=__name__, function='process', dlgid=self.dlgid, msg='Start broadcast')
+        #print ( 'VAMOS BIEN')
+        #d_broadcast_conf = self.bd.get_dlg_remotos(self, self.dlgid)
+
+        # Paso 6: Preparo la respuesta y la envio al datalogger
         # Mando el line_id de la ultima linea recibida
         self.response_pload += 'RX_OK:{0};'.format(self.control_code_list[-1])
         # Agrego el clock para resincronizar
         self.response_pload += 'CLOCK:{};'.format(datetime.now().strftime('%y%m%d%H%M'))
         # Si hay comandos en la redis los incorporo a la respuesta
         self.response_pload += redis_db.get_cmd_outputs()
-        # self.response_pload += redis_db.get_cmd_pilotos()
+        # Redis::Pilotos
+        self.response_pload += redis_db.get_cmd_pilotos()
+        # Redis::RESET
         self.response_pload += redis_db.get_cmd_reset()
         # Si el commited conf indica reset lo agrego a la respuesta
         self.process_commited_conf()
         self.send_response()
-
-        # Paso 6: Inserto las lineas en GDA.
+        sys.stdout.flush()
+        # Paso 7: Inserto las lineas en GDA.
         # if self.bd.insert_data(self.dlgid, self.data_line_list):
         #     # Si salio bien renombro el archivo a .dat para que el process lo use
         #     os.rename(tmp_file, dat_file)
@@ -215,7 +217,7 @@ class RAW_DATA_frame:
         #     # Algo anduvo mal y no pude insertarlo en GDA
         #     move_file_to_error_dir(tmp_file)
         log(module=__name__, function='process', dlgid=self.dlgid, msg='Start Daemon')
-        root_path = os.path.abspath('') # Obtengo la carpeta actual para que el demonio no se pierda. 
+        root_path = os.path.abspath('') # Obtengo la carpeta actual para que el demonio no se pierda.
         insert_GDA_process_daemon(self, tmp_file, dat_file, root_path)
 
         return

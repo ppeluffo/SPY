@@ -565,6 +565,43 @@ class BDGDA:
 
         return False
 
+    def get_dlg_remotos(self, dlgid, tag='GDA'):
+        log(module=__name__, function='get_dlg_remotos', dlgid=dlgid, level='SELECT', msg='start')
+        if not self.connect():
+            log(module=__name__, unction='get_dlg_remotos', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
+            return None
+
+        sql = """SELECT medida, direccion_modbus, tipo, dlg
+                FROM spx_reenvio_modbus as rm INNER JOIN spx_unidades as u ON rm.dlgid_id = u.id
+                WHERE u.dlgid = '{}'""".format(dlgid)
+        try:
+            query = text(sql)
+        except Exception as err_var:
+            log(module=__name__, function='get_dlg_remotos', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
+            log(module=__name__, function='get_dlg_remotos', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+            return None
+
+        d = dict()
+        try:
+            rp = self.conn.execute(query)
+        except Exception as err_var:
+            log(module=__name__, server=self.server, function='get_dlg_remotos', dlgid=dlgid,msg='ERROR: GDA exec EXCEPTION {}'.format(err_var))
+            return None
+
+        results = rp.fetchall()
+        d = dict()
+        for row in results:
+            print("ROW={}".format(row))
+            log(module=__name__, server=self.server, function='get_dlg_remotos', dlgid=dlgid, level='SELECT', msg='LINE={}'.format(raw))
+            medida_name, mbus_addr, tipo, dlg_remoto = row
+            d[dlg_remoto]['MEDIDA_NAME'] = medida_name
+            d[dlg_remoto]['MBUS_ADDR'] = mbus_addr
+            d[dlg_remoto]['TIPO'] = tipo
+            d[dlg_remoto]['DLG_REMOTO'] = dlg_remoto
+
+        return d
+
+
 class BDGDA_TAHONA(BDGDA):
 
     def __init__(self, modo='local',server='comms'):

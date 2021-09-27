@@ -12,6 +12,8 @@ from spy_process import move_file_to_error_dir
 import daemon
 import shutil
 
+import time, atexit
+from signal import SIGTERM
 
 def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):   
     # Paso el proceso a demonio.
@@ -36,7 +38,7 @@ def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):
 
     return
 
-def insert_GDA_process_daemon(obj, tmp_file, dat_file, root_path):
+def insert_GDA_process_daemon_ori(obj, tmp_file, dat_file, root_path):
     # Inicio un fork para dejar como demonio al proceso que ingresa los datos en la base.
     pid = os.fork()
     if pid == 0:
@@ -47,5 +49,35 @@ def insert_GDA_process_daemon(obj, tmp_file, dat_file, root_path):
 
     return
 
+
+def insert_GDA_process_daemon(obj, tmp_file, dat_file, root_path):
+    # Inicio un fork para dejar como demonio al proceso que ingresa los datos en la base.
+
+    # Primer fork.
+    if os.fork():
+        sys.exit()
+
+    os.chdir("/")
+    os.setsid()
+    os.umask(0)
+
+    # Segundo fork para asegurarnos no tener terminal asociada
+    if os.fork():
+        sys.exit()
+
+    # stdin
+    with open('/dev/null', 'r') as dev_null:
+        os.dup2(dev_null.fileno(), sys.stdin.fileno())
+
+    sys.stdout.flush()
+    with open(self.stdout, 'a+', 0) as stdout:
+        os.dup2(stdout.fileno(), sys.stdout.fileno())
+
+    try:
+        insert_GDA(obj.dlgid, obj.data_line_list, tmp_file, dat_file, root_path)
+    except Exception as err:
+        log(module=__name__, function='process', dlgid=obj.dlgid, msg=str(err))
+
+    return
 
 

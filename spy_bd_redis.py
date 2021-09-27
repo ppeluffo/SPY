@@ -102,17 +102,14 @@ class Redis():
         # PILOTO
         response = ''
         if self.connected:
-            if self.rh.hexists(self.dlgid, 'POUT'):
-                pslot = int(self.rh.hget(self.dlgid, 'PSLOT'))
-                pout = float(self.rh.hget(self.dlgid, 'POUT'))
+            if self.rh.hexists(self.dlgid, 'PILOTO'):
+                pout = float(self.rh.hget(self.dlgid, 'PILOTO'))
+                #log(module=__name__, function='get_cmd_pilotos', dlgid=self.dlgid, msg='Redis get_cmd_pilotos. pout={}'.format(pout))
                 if pout != -1:
-                    response += 'POUT=%s,%s:' % (pslot, pout)
-
-            self.rh.hset(self.dlgid, 'POUT', '-1')
-            self.rh.hset(self.dlgid, 'PSLOT', '-1')
+                    response += 'PILOTO={}:'.format(pout)
+            self.rh.hset(self.dlgid, 'PILOTO', '-1')
         else:
             log(module=__name__, function='get_cmd_pilotos', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
-
         return (response)
 
     def get_cmd_reset(self):
