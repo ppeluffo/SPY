@@ -2,6 +2,10 @@
 #!/usr/bin/python3 -u
 """
 
+Version 2.0 @ 2021-09-28
+- Modbus + redis
+- Pilotos
+
 Version 2.0 @ 2021-09-24
 - Corrijo bug de fork al procesar datos.
 - Modifico el sistema de configuracion de pilotos para soportar 12 consignas
