@@ -66,12 +66,14 @@ def insert_GDA_process_daemon(obj, tmp_file, dat_file, root_path):
         sys.exit()
 
     # stdin
+    '''
     with open('/dev/null', 'r') as dev_null:
         os.dup2(dev_null.fileno(), sys.stdin.fileno())
 
     sys.stdout.flush()
     with open(self.stdout, 'a+', 0) as stdout:
         os.dup2(stdout.fileno(), sys.stdout.fileno())
+    '''
 
     try:
         insert_GDA(obj.dlgid, obj.data_line_list, tmp_file, dat_file, root_path)

@@ -72,7 +72,7 @@ class Redis():
             log(module=__name__, function='insert_line', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
         return
 
-    def get_cmd_outputs(self):
+    def get_cmd_outputs(self,fw_version=200 ):
         # SALIDAS
         response = ''
         if self.connected:
@@ -89,6 +89,7 @@ class Redis():
             if self.rh.hexists(self.dlgid, 'MODBUS'):
                 mbus_line = self.rh.hget(self.dlgid, 'MODBUS').decode()
                 if mbus_line != 'NUL':
+                    log(module=__name__, function='get_cmd_outputs', dlgid=self.dlgid, msg='REDIS-MODBUS:{}'.format(mbus_line))
                     response = 'MBUS=%s;' % mbus_line
 
             self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
@@ -98,19 +99,20 @@ class Redis():
 
         return (response)
 
-    def get_cmd_pilotos(self):
+    def get_cmd_pilotos(self,fw_version=200):
         # PILOTO
         response = ''
-        if self.connected:
-            if self.rh.hexists(self.dlgid, 'PILOTO'):
-                pout = float(self.rh.hget(self.dlgid, 'PILOTO'))
-                #log(module=__name__, function='get_cmd_pilotos', dlgid=self.dlgid, msg='Redis get_cmd_pilotos. pout={}'.format(pout))
-                if pout != -1:
-                    response += 'PILOTO={}:'.format(pout)
-            self.rh.hset(self.dlgid, 'PILOTO', '-1')
-        else:
-            log(module=__name__, function='get_cmd_pilotos', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
-        return (response)
+        if fw_version >= 400 :
+            if self.connected:
+                if self.rh.hexists(self.dlgid, 'PILOTO'):
+                    pout = float(self.rh.hget(self.dlgid, 'PILOTO'))
+                    #log(module=__name__, function='get_cmd_pilotos', dlgid=self.dlgid, msg='Redis get_cmd_pilotos. pout={}'.format(pout))
+                    if pout != -1:
+                        response += 'PILOTO={}:'.format(pout)
+                        self.rh.hset(self.dlgid, 'PILOTO', '-1')
+            else:
+                log(module=__name__, function='get_cmd_pilotos', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
+        return response
 
     def get_cmd_reset(self):
         # RESET

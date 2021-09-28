@@ -5,12 +5,12 @@ from spy_log import log
 import os
 from spy import Config
 from datetime import datetime
-from spy_utils import u_send_response, u_dataline_to_dict
+from spy_utils import u_send_response, u_dataline_to_dict, u_convert_fw_version_to_str
 from spy_bd_redis import Redis
 from spy_bd_gda import BDGDA
 from spy_process import move_file_to_error_dir
 from multiprocessing import Process
-
+import sys
 from spy_raw_frame_data_daemon import insert_GDA_process_daemon
 from spy_raw_frame_callbacks_daemon import callbacks_process_daemon
 import signal
@@ -26,6 +26,7 @@ class RAW_DATA_frame:
     def __init__(self,dlgid,version, payload):
         self.dlgid = dlgid
         self.version = version
+        self.fw_version = u_convert_fw_version_to_str(self.version)
         self.payload_str = payload
         self.response_pload = ''
         self.bd = BDGDA( modo = Config['MODO']['modo'] )
@@ -76,42 +77,6 @@ class RAW_DATA_frame:
                     os.execl(CBK, PROGRAM, self.dlgid)
         except Exception as e:
             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg=str(e))
-
-    # def process_callbacks(self):
-        
-    #     log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACK ==> START')
-        
-    #     def run_program():
-    #         os.system('{0} {1}'.format(CBK,self.dlgid))
-    #         #os.execl(CBK, PROGRAM, self.dlgid)
-            
-    #     def end_time(process,time):
-    #         p = Process(target=process,args ='')
-    #         p.start()
-    #         p.join(time)
-    #         if p.is_alive():
-    #             p.terminate()
-    #             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> EJECUCION INTERRUMPIDA POR TIMEOUT')
-                
-    #     # PREPARO ARGUMENTOS
-    #     try:
-    #         PATH = Config['CALLBACKS_PATH']['cbk_path']
-    #         PROGRAM = Config['CALLBACKS_PROGRAM']['cbk_program']
-    #         CBK = os.path.join(PATH, PROGRAM)
-    #         #
-    #         log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALL_BACKS ==> {0} {1}]'.format(CBK,self.dlgid))
-    #         # EJECUTO CALLBACKS SI LAS VARIABLES PATH y PROGRAM TIENEN VALORES COHERENTES
-    #         if bool(PROGRAM) & bool(PATH):
-    #             # EJECUTO EL CALLBACKS CON TIEMPO MAXIMO DE EJECUCION DE 1 s
-    #             end_time(run_program,1)
-    #         else: 
-    #             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> [PATH = {0}],[PROGRAM = {1}'.format(PATH,PROGRAM))
-    #             log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> INTERRUMPIDO')
-        
-    #     except:
-    #         log(module=__name__, function='process_callbacks', dlgid=self.dlgid, msg='CALLBACKS ==> ERROR A LEER cbk vars de spy.conf')
-    
-    #     log(module=__name__, function='process', dlgid=self.dlgid, msg='CALLBACK ==> END')
 
     def save_payload_in_file(self):
         # Guarda el payload en un archivo para que luego lo procese el 'process'
@@ -199,10 +164,10 @@ class RAW_DATA_frame:
         self.response_pload += 'RX_OK:{0};'.format(self.control_code_list[-1])
         # Agrego el clock para resincronizar
         self.response_pload += 'CLOCK:{};'.format(datetime.now().strftime('%y%m%d%H%M'))
-        # Si hay comandos en la redis los incorporo a la respuesta
-        self.response_pload += redis_db.get_cmd_outputs()
+        # Si hay comandos en la redis los incorporo a la respuesta ( modbus )
+        self.response_pload += redis_db.get_cmd_outputs(self.fw_version)
         # Redis::Pilotos
-        self.response_pload += redis_db.get_cmd_pilotos()
+        self.response_pload += redis_db.get_cmd_pilotos(self.fw_version)
         # Redis::RESET
         self.response_pload += redis_db.get_cmd_reset()
         # Si el commited conf indica reset lo agrego a la respuesta
