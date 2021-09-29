@@ -19,7 +19,6 @@ class INIT_CONF_MODBUS:
         self.dconf = dconf
         self.response = ''
         self.sla = dconf.get(('BASE', 'MBUS_SLAVE_ADDR'), '0')
-
         self.config_modbus_old_release()
         return
 
@@ -59,8 +58,7 @@ class INIT_CONF_MBUS_LOW:
         self.dconf = dconf
         self.fw_version = u_convert_fw_version_to_str(self.version)
         self.response = ''
-        self.sla = dconf.get(('BASE', 'MBUS_SLAVE_ADDR'), '0')
-
+        #
         self.config_modbus_new_release()
         return
 
@@ -75,31 +73,21 @@ class INIT_CONF_MBUS_LOW:
         return
 
     def config_modbus_new_release(self):
-        sla = int(self.dconf.get(('BASE', 'MBUS_SLAVE_ADDR'), '0'))
-        self.response = 'SLA:{0};'.format(sla)
+
         mbwt = int(self.dconf.get(('BASE', 'MBUS_WAITTIME'), '1'))
-        self.response += 'MBWT:{0};'.format(mbwt)
-        data_format_name = self.dconf.get(('BASE', 'MBUS_FORMAT'), 'KINCO')
-        self.response += 'FORMAT:{0};'.format(data_format_name)
+        self.response = 'MBWT:{0}'.format(mbwt)
 
         for ch in range(0,7):
             mbname = 'M{}'.format(ch)
             name = self.dconf.get((mbname, 'NAME'), 'X')
-            addr = int(self.dconf.get((mbname, 'ADDR'), '0'))
-            size = int(self.dconf.get((mbname, 'SIZE'), '1'))
+            sla_addr = int(self.dconf.get((mbname, 'SLA_ADDR'), '0'))
+            reg_addr = int(self.dconf.get((mbname, 'REG_ADDR'), '0'))
+            nro_recs = int(self.dconf.get((mbname, 'NRO_RECS'), '1'))
             fcode = int(self.dconf.get((mbname, 'FCODE'), '3'))
-            tipo = self.dconf.get((mbname, 'TYPE'), 'U16')
+            tipo = self.dconf.get((mbname, 'TYPE'), 'U16').upper()
+            codec = self.dconf.get((mbname, 'CODEC'), 'C3210').upper()
             pow10 = int(self.dconf.get((mbname, 'POW10'), '0'))
-            if tipo == 'U16':
-                self.response += 'MB%02d:%s,%d,%d,%d,U16,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I16':
-                self.response += 'MB%02d:%s,%d,%d,%d,I16,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'U32':
-                self.response += 'MB%02d:%s,%d,%d,%d,U32,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I32':
-                self.response += 'MB%02d:%s,%d,%d,%d,I32,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'FLOAT':
-                self.response += 'MB%02d:%s,%d,%d,%d,FLOAT,%d;' % (ch, name, addr, size, fcode, pow10)
+            self.response += ';MB%02d:%s,%d,%d,%d,%d,%s,%s,%d' % (ch, name, sla_addr, reg_addr, nro_recs, fcode, tipo, codec, pow10)
         return
 
 
@@ -127,24 +115,18 @@ class INIT_CONF_MBUS_MED:
 
     def config_modbus_new_release(self):
         self.response = ''
-        for ch in range(7,14):
+        for ch in range(7, 14):
             mbname = 'M{}'.format(ch)
             name = self.dconf.get((mbname, 'NAME'), 'X')
-            addr = int(self.dconf.get((mbname, 'ADDR'), '0'))
-            size = int(self.dconf.get((mbname, 'SIZE'), '1'))
+            sla_addr = int(self.dconf.get((mbname, 'SLA_ADDR'), '0'))
+            reg_addr = int(self.dconf.get((mbname, 'REG_ADDR'), '0'))
+            nro_recs = int(self.dconf.get((mbname, 'NRO_RECS'), '1'))
             fcode = int(self.dconf.get((mbname, 'FCODE'), '3'))
-            tipo = self.dconf.get((mbname, 'TYPE'), 'U16')
+            tipo = self.dconf.get((mbname, 'TYPE'), 'U16').upper()
+            codec = self.dconf.get((mbname, 'CODEC'), 'C3210').upper()
             pow10 = int(self.dconf.get((mbname, 'POW10'), '0'))
-            if tipo == 'U16':
-                self.response += 'MB%02d:%s,%d,%d,%d,U16,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I16':
-                self.response += 'MB%02d:%s,%d,%d,%d,I16,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'U32':
-                self.response += 'MB%02d:%s,%d,%d,%d,U32,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I32':
-                self.response += 'MB%02d:%s,%d,%d,%d,I32,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'FLOAT':
-                self.response += 'MB%02d:%s,%d,%d,%d,FLOAT,%d;' % (ch, name, addr, size, fcode, pow10)
+            self.response += ';MB%02d:%s,%d,%d,%d,%d,%s,%s,%d' % (
+            ch, name, sla_addr, reg_addr, nro_recs, fcode, tipo, codec, pow10)
         return
 
 
@@ -175,20 +157,14 @@ class INIT_CONF_MBUS_HIGH:
         for ch in range(14,20):
             mbname = 'M{}'.format(ch)
             name = self.dconf.get((mbname, 'NAME'), 'X')
-            addr = int(self.dconf.get((mbname, 'ADDR'), '0'))
-            size = int(self.dconf.get((mbname, 'SIZE'), '1'))
+            sla_addr = int(self.dconf.get((mbname, 'SLA_ADDR'), '0'))
+            reg_addr = int(self.dconf.get((mbname, 'REG_ADDR'), '0'))
+            nro_recs = int(self.dconf.get((mbname, 'NRO_RECS'), '1'))
             fcode = int(self.dconf.get((mbname, 'FCODE'), '3'))
-            tipo = self.dconf.get((mbname, 'TYPE'), 'U16')
+            tipo = self.dconf.get((mbname, 'TYPE'), 'U16').upper()
+            codec = self.dconf.get((mbname, 'CODEC'), 'C3210').upper()
             pow10 = int(self.dconf.get((mbname, 'POW10'), '0'))
-            if tipo == 'U16':
-                self.response += 'MB%02d:%s,%d,%d,%d,U16,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I16':
-                self.response += 'MB%02d:%s,%d,%d,%d,I16,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'U32':
-                self.response += 'MB%02d:%s,%d,%d,%d,U32,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I32':
-                self.response += 'MB%02d:%s,%d,%d,%d,I32,%d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'FLOAT':
-                self.response += 'MB%02d:%s,%d,%d,%d,FLOAT,%d;' % (ch, name, addr, size, fcode, pow10)
+            self.response += ';MB%02d:%s,%d,%d,%d,%d,%s,%s,%d' % (
+            ch, name, sla_addr, reg_addr, nro_recs, fcode, tipo, codec, pow10)
         return
 

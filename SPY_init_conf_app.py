@@ -77,9 +77,9 @@ class INIT_CONF_APP:
         #
         for slot in range(0,12):
             sHHMM = 'HHMM{}'.format(slot)
-            hhmm =  int(self.dconf.get(('PILOTO', sHHMM), hhmm_default))
-            if hhmm == '':
-                hhmm = hhmm_default
+            hhmm =  self.dconf.get(('PILOTO', sHHMM), hhmm_default)
+            hhmm = hhmm.replace(":", "")
+            hhmm = int(hhmm)
             sPRES = 'P{}'.format(slot)
             pres = float(self.dconf.get(('PILOTO', sPRES), presion_default))
             if pres == '':

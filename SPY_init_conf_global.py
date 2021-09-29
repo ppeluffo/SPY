@@ -50,7 +50,7 @@ class INIT_CONF_GLOBAL:
         self.payload_dict = payload_dict
         self.dlgbdconf_dict = dlgbdconf_dict
         self.response_pload = 'CLOCK:{}'.format(datetime.now().strftime('%y%m%d%H%M'))
-        log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
+        log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start ')
         return
 
 
@@ -71,21 +71,6 @@ class INIT_CONF_GLOBAL:
         '''
         log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='start')
 
-        # Veo si esta autorizado y actualizo el uid
-        '''
-        uid = self.payload_dict.get('UID', '0000')
-        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG dlgid={0},uid={1}'.format(self.dlgid, uid))
-
-        if uid != '000':
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG UID Not default'.format(self.dlgid, uid))
-            bd = BDSPY(modo=Config['MODO']['modo'] )
-            if not bd.check_auth(self.dlgid, uid):
-                self.response_pload += ':NOT_ALLOWED'
-                self.send_response()
-                return
-        # La configuracion del dlg de la base de datos ya fue leida en la clase superior RAW_INIT y se encuentra
-        # en self.dlgbdconf_dict
-        '''
         # Parametros administrativos:
         #simpwd = self.payload_dict.get('SIMPWD', 'ERROR')
         wrst = self.payload_dict.get('WRST', 'ERROR')
@@ -401,27 +386,47 @@ class INIT_CONF_GLOBAL:
 
 
     def PV_checksum_aplicacion(self, d):
-        output_modo = d.get(('BASE','APLICACION'),'OFF')
+        '''
+        Las versiones nuevas solo toman como aplicacion OFF,CONSIGNA,PILOTO.
+        '''
         cks_str = ''
-        if output_modo == 'OFF':
-            cks_str = self.PV_checksum_str_app_off(d)
-        elif output_modo == 'TANQUE':
-            cks_str = self.PV_checksum_str_app_tanque(d)
-        elif output_modo == 'PERFORACION':
-            cks_str = self.PV_checksum_str_app_perforacion(d)
-        elif output_modo == 'CONSIGNA':
-            cks_str = self.PV_checksum_str_app_consigna(d)
-        elif output_modo == 'PLANTAPOT':
-            cks_str = self.PV_checksum_str_app_plantapot(d)
-        elif output_modo == 'EXTPOLL':
-            cks_str = self.PV_checksum_str_app_extpoll(d)
-        elif output_modo == 'PILOTO':
-            cks_str = self.PV_checksum_str_app_piloto(d)
-        elif output_modo == 'MODBUS':
-            cks_str = self.PV_checksum_str_app_modbus(d)
-
-        fw_version = u_get_fw_version(self.dlgbdconf_dict)
-        if fw_version >= 300:
+        if self.fw_version >= 400:
+            output_modo = d.get(('BASE', 'APLICACION'), 'OFF')
+            if output_modo == 'OFF':
+                cks_str = self.PV_checksum_str_app_off(d)
+            elif output_modo == 'CONSIGNA':
+                cks_str = self.PV_checksum_str_app_consigna(d)
+            elif output_modo == 'PILOTO':
+                cks_str = self.PV_checksum_str_app_piloto(d)
+            else:
+                log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT',
+                    msg='ERROR: Aplicacion NEW No detectada en BD')
+        else:
+            # Aplicaciones anteriores
+            output_modo = d.get(('BASE','APLICACION'),'OFF')
+            if output_modo == 'OFF':
+                cks_str = self.PV_checksum_str_app_off(d)
+            elif output_modo == 'TANQUE':
+                cks_str = self.PV_checksum_str_app_tanque(d)
+            elif output_modo == 'PERFORACION':
+                cks_str = self.PV_checksum_str_app_perforacion(d)
+            elif output_modo == 'CONSIGNA':
+                cks_str = self.PV_checksum_str_app_consigna(d)
+            elif output_modo == 'PLANTAPOT':
+                cks_str = self.PV_checksum_str_app_plantapot(d)
+            elif output_modo == 'EXTPOLL':
+                cks_str = self.PV_checksum_str_app_extpoll(d)
+            elif output_modo == 'PILOTO':
+                cks_str = self.PV_checksum_str_app_piloto(d)
+            elif output_modo == 'MODBUS':
+                cks_str = self.PV_checksum_str_app_modbus(d)
+            else:
+                log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT',
+                    msg='ERROR: Aplicacion OLD No detectada en BD')
+        #
+        # Calculo ahor a partir del cks_str el valor del hash
+        cks = 0
+        if self.fw_version >= 300:
             cks = self.PV_calcular_hash_checksum(cks_str)
         else:
             cks = self.PV_calcular_ckechsum(cks_str)
@@ -432,36 +437,28 @@ class INIT_CONF_GLOBAL:
 
     def PV_checksum_modbus(self, d):
         # chechsum parametros modbus
-        # MODBUS;SLA:%04d;MBWT:%03d;
-        cks_str = 'MODBUS;SLA:%04d;' % int(d.get(('BASE', 'MBUS_SLAVE_ADDR'), '0'))
-        cks_str += 'MBWT:%03d;' % int(d.get(('BASE', 'MBUS_WAITTIME'), '1'))
-        data_format = d.get(('BASE', 'MBUS_FORMAT'), 'KINCO')
-        cks_str += 'FORMAT:{};'.format(data_format)
+        # MODBUS;MBWT:%03d;
+        mbwt = int(d.get(('BASE', 'MBUS_WAITTIME'), '1'))
+        cks_str = 'MODBUS;MBWT:%03d' % mbwt
 
         for ch in range(0,20):
-            mbname = 'M{}'.format(ch)
+            mbname = 'M%d' % (ch)
             name = d.get((mbname, 'NAME'), 'X')
-            addr = int(d.get((mbname, 'ADDR'), '0'))
-            size = int(d.get((mbname, 'SIZE'), '1'))
+            sla_addr = int(d.get((mbname, 'SLA_ADDR'), '0'))
+            reg_addr = int(d.get((mbname, 'REG_ADDR'), '0'))
+            nro_recs = int(d.get((mbname, 'NRO_RECS'), '1'))
             fcode = int(d.get((mbname, 'FCODE'), '3'))
-            tipo = d.get((mbname, 'TYPE'), 'U16')
+            tipo = d.get((mbname, 'TYPE'), 'U16').upper()
+            codec = d.get((mbname, 'CODEC'), 'C3210').upper()
             pow10 = int(d.get((mbname, 'POW10'), '0'))
-            #print('name={0}, addr={1}, size={2}, fcode={3}, tipo={4}, pow10={5}'.format(name,addr,size,fcode,tipo, pow10 ))
-            if tipo == 'U16':
-                cks_str += 'MB%02d:%s,%04d,%02d,%02d,U16,%02d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I16':
-                cks_str += 'MB%02d:%s,%04d,%02d,%02d,I16,%02d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'U32':
-                cks_str += 'MB%02d:%s,%04d,%02d,%02d,U32,%02d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'I32':
-                cks_str += 'MB%02d:%s,%04d,%02d,%02d,I32,%02d;' % (ch, name, addr, size, fcode, pow10)
-            elif tipo == 'FLOAT':
-                cks_str += 'MB%02d:%s,%04d,%02d,%02d,FLOAT,%02d;' % (ch, name, addr, size, fcode, pow10)
+            # print("DEBUG: ch=%d, mbname=%s, name=%s, sla_addr=%d, reg_addr=%d, nro_recs=%d, fcode=%d, tipo=%s,pow10=%d,codec=%s" % (ch,mbname, name, sla_addr, reg_addr, nro_recs, fcode, tipo,pow10,codec))
+            cks_str += ';MB%02d:%s,%02d,%04d,%02d,%02d,%s,%s,%02d' % (ch, name, sla_addr, reg_addr, nro_recs, fcode, tipo, codec, pow10)
 
         #print('DEBUG:{}'.format(cks_str))
         cks = self.PV_calcular_hash_checksum(cks_str)
         log(module=__name__, function='PV_checksum_modbus', dlgid=self.dlgid, level='SELECT', msg='CKS_MB: [{0}][{1}]'.format( cks_str,hex(cks) ) )
         return cks
+
 
     def PV_checksum_str_app_off(self,d):
         cks_str = 'OFF'
@@ -544,16 +541,20 @@ class INIT_CONF_GLOBAL:
 
 
     def PV_checksum_str_app_piloto(self, d):
-        # header
-        pxr = int(d.get(('PILOTO', 'PulseXrev'), '0000'))
-        pwidth = int(d.get(('PILOTO', 'pwidth'), '00'))
-        cks_str = 'PLT;PXR:%d;PWIDTH:%d;' % (pxr, pwidth)
-        for slot in range(0,12):
-            sHHMM = 'HHMM{}'.format(slot)
-            hhmm =  int(d.get(('PILOTO', sHHMM), '0000'))
-            sPRES = 'P{}'.format(slot)
-            pres = float(d.get(('PILOTO', sPRES), '0'))
-            cks_str += 'SLOT%d:%04d,%.02f;' % (slot, hhmm, pres)
+        # El piloto solo se utiliza en versiones nuevas
+        cks_str = ''
+        if self.fw_version >= 400:
+            pxr = int(d.get(('PILOTO', 'PulseXrev'), '0000'))
+            pwidth = int(d.get(('PILOTO', 'pwidth'), '00'))
+            cks_str = 'PLT;PXR:%d;PWIDTH:%d;' % (pxr, pwidth)
+            for slot in range(0,12):
+                sHHMM = 'HHMM{}'.format(slot)
+                hhmm =  d.get(('PILOTO', sHHMM), '0000')
+                hhmm = hhmm.replace(":", "")
+                hhmm = int(hhmm)
+                sPRES = 'P{}'.format(slot)
+                pres = float(d.get(('PILOTO', sPRES), '0'))
+                cks_str += 'SLOT%d:%04d,%.02f;' % (slot, hhmm, pres)
         return cks_str
 
 
