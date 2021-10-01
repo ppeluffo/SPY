@@ -49,6 +49,8 @@ class Redis():
                 self.rh.hset(self.dlgid, 'MEMFORMAT', 'FALSE')
             if not self.rh.hexists(self.dlgid, 'MODBUS'):
                 self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
+            if not self.rh.hexists(self.dlgid, 'BROADCAST'):
+                self.rh.hset(self.dlgid, 'BROADCAST', 'NUL')
 
             log(module=__name__, function='create_rcd', level='SELECT', dlgid=self.dlgid, msg='Redis init rcd. OK !!')
         else:
@@ -72,7 +74,7 @@ class Redis():
             log(module=__name__, function='insert_line', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
         return
 
-    def get_cmd_outputs(self,fw_version=200 ):
+    def get_cmd_outputs(self, fw_version=200 ):
         # SALIDAS
         response = ''
         if self.connected:
@@ -81,22 +83,41 @@ class Redis():
                 outputs = int(self.rh.hget(self.dlgid, 'OUTPUTS'))
                 if outputs != -1:
                     response = 'DOUTS=%s:' % outputs
-
-            self.rh.hset(self.dlgid, 'OUTPUTS', '-1')
             #
-            # MODBUS
-            # Devuelve un bytearray por lo que decode lo transforma en string
-            if self.rh.hexists(self.dlgid, 'MODBUS'):
-                mbus_line = self.rh.hget(self.dlgid, 'MODBUS').decode()
-                if mbus_line != 'NUL':
-                    log(module=__name__, function='get_cmd_outputs', dlgid=self.dlgid, msg='REDIS-MODBUS:{}'.format(mbus_line))
-                    response = 'MBUS=%s;' % mbus_line
-
-            self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
-
+            self.rh.hset(self.dlgid, 'OUTPUTS', '-1')
         else:
             log(module=__name__, function='get_cmd_outputs', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
+        #
+        return (response)
 
+    def get_cmd_modbus(self,fw_version=200 ):
+        '''
+        Los lineas a enviar por modbus pueden estar en 2 variables de REDIS: MODBUS y BROADCAST.
+        En las versiones >= 400 se usan BROADCAST.
+        En las versiones anteriores usamos MODBUS.
+        '''
+        response = ''
+        if self.connected:
+            if fw_version < 400:
+                # MODBUS
+                # Devuelve un bytearray por lo que decode lo transforma en string
+                if self.rh.hexists(self.dlgid, 'MODBUS'):
+                    mbus_line = self.rh.hget(self.dlgid, 'MODBUS').decode()
+                    if mbus_line != 'NUL':
+                        log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='REDIS-MODBUS:{}'.format(mbus_line))
+                        response = 'MBUS=%s;' % mbus_line
+                self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
+            else:
+                # BROADCAST:
+                if self.rh.hexists(self.dlgid, 'BROADCAST'):
+                    mbus_line = self.rh.hget(self.dlgid, 'BROADCAST').decode()
+                    if mbus_line != 'NUL':
+                        log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='REDIS-MODBUS-BCAST:{}'.format(mbus_line))
+                        response = 'MBUS=%s;' % mbus_line
+                self.rh.hset(self.dlgid, 'BROADCAST', 'NUL')
+        else:
+            log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
+        #
         return (response)
 
     def get_cmd_pilotos(self,fw_version=200):
@@ -132,6 +153,19 @@ class Redis():
             log(module=__name__, function='get_cmd_reset', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
 
         return (response)
+
+    def insert_bcast_line(self, dlg_rem=None, redis_brodcast_line=None, fw_version=200 ):
+        '''
+        Inserta en la redis de los dlg remotos, la linea de modbus en la variable BROADCAST.
+        Pendiente: Verificar que la version de los dlgremotos sea >= 400.
+        '''
+        if fw_version < 400:
+            return
+        if self.connected:
+            if redis_brodcast_line is not None:
+                self.rh.hset(dlg_rem, 'BROADCAST', redis_brodcast_line)
+            else:
+                elf.rh.hset(dlg_rem, 'BROADCAST', 'NUL')
 
     def execute_callback(self):
         '''

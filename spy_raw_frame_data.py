@@ -32,6 +32,7 @@ class RAW_DATA_frame:
         self.bd = BDGDA( modo = Config['MODO']['modo'] )
         self.control_code_list = list()
         self.data_line_list = list()
+        self.redis_db = None
         log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
         return
 
@@ -127,6 +128,74 @@ class RAW_DATA_frame:
         #                  ]
         #
 
+    def broadcast_local_vars(self):
+        '''
+        Inserta en la redis de los dataloggers remotos la linea MBUS correspondiente.
+        Un datalogger puede hacer un broadcast de una se sus medidas a varios datalgogers remotos.
+        Aqui generamos las lineas correspondientes  en la redis de c/remoto
+        Recibimos como parametro 'dataline' para extraer el valor de la magnitud a reenviar.
+        '''
+        log(module=__name__, function='broadcast_medidas', dlgid=self.dlgid, level='SELECT', msg='Start')
+        # Leo la configuracion de los dlg remotos a los que hacer broadcast.
+        d = self.bd.get_dlg_remotos(self.dlgid)
+        # Si no hay remotos salimos ya.
+        if d is None:
+            return
+        # Linea de datos de la que extraer el valor a enviar a los dlg remotos por mbus.
+        line = self.data_line_list[-1]
+        # Transformo la linea a un dict() para hallar facilmente el valor de una medida
+        d_line = u_dataline_to_dict(line)
+        # Creo un dict() donde voy a tener para c/dlgid remoto la linea redis que va a ir creciendo en la medida que
+        # hallan mas variables para enviarle.
+        d_redis = dict()
+        #
+        for key in d.keys():
+            # Paso 1: Obtengo los datos de un datalogger remoto( las claves creadas son una tupla
+            dlg_rem, medida = key
+            mbus_slave = d[key]['MBUS_SLAVE']
+            mbus_regaddr = d[key]['MBUS_REGADDR']
+            tipo = d[key]['TIPO']
+            codec = d[key]['CODEC']
+            #log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT',msg='dlg_rem={0},medida={1},slave={2}'.format(dlg_rem,medida,mbus_slave))
+            #
+            # Paso 2: Leo el valor de la medida a enviar
+            valor = d_line.get(medida, 0)
+            # log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT',msg='valor={0}'.format(valor))
+            #
+            # Paso 3: Armo la linea redis [1,0,1,6,u16,c3210,1122]
+            # El parametro modbus nro_regs y fcode lo debo inferir. En proximas versiones lo leo de la bd de lo remotos.
+            nro_regs = 2
+            if tipo.upper() == 'I16' or tipo.upper() == 'U16':
+                nro_regs = 1
+            # 1 reg(2bytes) lo escribimos con codigo 6 y 2 regs(4bytes) con codigo 16
+            fcode = 6
+            if nro_regs == 2:
+                fcode = 16
+
+            redis_part_line = "[{0},{1},{2},{3},{4},{5},{6}]".format(mbus_slave,mbus_regaddr,nro_regs,fcode,tipo.upper(),codec.upper(),valor)
+            #log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='{0}: mbus_line={1}'.format(dlg_rem, redis_part_line))
+            #
+            # Leo las posibles entradas ( linea mbus) que ya hallan para el datalogger
+            redis_line = d_redis.get( (dlg_rem,'REDIS_LINE'),'')
+            # Agrego los datos de la variable local a enviar.
+            redis_line += redis_part_line
+            # Guardo nuevamente la linea compuesta
+            d_redis[(dlg_rem,'REDIS_LINE')] = redis_line
+
+        # Termine de procesar y crear todas las lineas: Para c/dlgid remoto tengo una linea compuesta: las inserto
+        for key in d_redis.keys():
+            dlg_rem,_ = key
+            redis_brodcast_line = d_redis.get( (dlg_rem,'REDIS_LINE'),'')
+            try:
+                self.redis_db.insert_bcast_line( dlg_rem, redis_brodcast_line, self.fw_version )
+            except:
+                log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, msg='ERROR REDIS INSERT BCAST: line:{}'.format(redis_brodcast_line))
+            #
+            log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='{0}: redis_bcast_line: {1}'.format(dlg_rem, redis_brodcast_line))
+        #
+        log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='End')
+        return
+
     def process(self):
         # Realizo todos los pasos necesarios en el payload paragenerar la respuesta al datalooger e insertar los datos en GDA
         log(module=__name__, function='process', dlgid=self.dlgid, msg='START')
@@ -138,11 +207,10 @@ class RAW_DATA_frame:
         self.split_code_and_data_lists()
 
         # Paso 3: Actualizo la REDIS con la ultima linea
-        redis_db = Redis(self.dlgid)
-
+        self.redis_db = Redis(self.dlgid)
         # Guardo la ultima linea en la redis
         try: 
-            redis_db.insert_line(self.data_line_list[-1])
+            self.redis_db.insert_line(self.data_line_list[-1])
         except: 
             log(module=__name__, function='process', dlgid=self.dlgid, msg='ERROR REDIS INSERT: len:{0}, line:{1}'.format(len(self.data_line_list), self.data_line_list))
 
@@ -150,30 +218,43 @@ class RAW_DATA_frame:
         log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
         ##if redis_db.execute_callback():		# yosniel cabrera -> elimine la condicion de que preguntara por type en redis antes de llamar al callback
         # self.process_callbacks()
-        if self.bd.is_automatismo(self.dlgid) or redis_db.execute_callback():
+        if self.bd.is_automatismo(self.dlgid) or self.redis_db.execute_callback():
             log(module=__name__, function='process', dlgid=self.dlgid, msg='Start CallBacks Daemon')
             callbacks_process_daemon(self)
 
-        # Paso 5: Veo si debo hacer un broadcast a remotos
-        #log(module=__name__, function='process', dlgid=self.dlgid, msg='Start broadcast')
-        #print ( 'VAMOS BIEN')
-        #d_broadcast_conf = self.bd.get_dlg_remotos(self, self.dlgid)
-
-        # Paso 6: Preparo la respuesta y la envio al datalogger
+        # Paso 5: Preparo la respuesta
         # Mando el line_id de la ultima linea recibida
         self.response_pload += 'RX_OK:{0};'.format(self.control_code_list[-1])
         # Agrego el clock para resincronizar
         self.response_pload += 'CLOCK:{};'.format(datetime.now().strftime('%y%m%d%H%M'))
+
+        #------------------------------------------------------------------------------------------------
+        # 2021-09-30
+        # Transmision de una o mas varibles locales a equipos remotos. Este broadcast se hace de un equipo
+        # central a remotos.
+        # El central escribe en la redis de los remotos los datos de la variable a re-enviar.
+        # Version >= 400:
+        if self.fw_version >= 400:
+            self.broadcast_local_vars()
+        # ------------------------------------------------------------------------------------------------
+        # OUTPUTS:
         # Si hay comandos en la redis los incorporo a la respuesta ( modbus )
-        self.response_pload += redis_db.get_cmd_outputs(self.fw_version)
+        if self.fw_version < 400:
+            self.response_pload += self.redis_db.get_cmd_outputs(self.fw_version)
+        # ------------------------------------------------------------------------------------------------
+        # MODBUS:
+        # Si hay comandos en la redis para enviar por modbus, lo hago aqui
+        self.response_pload += self.redis_db.get_cmd_modbus(self.fw_version)
+        # ------------------------------------------------------------------------------------------------
         # Redis::Pilotos
-        self.response_pload += redis_db.get_cmd_pilotos(self.fw_version)
+        self.response_pload += self.redis_db.get_cmd_pilotos(self.fw_version)
         # Redis::RESET
-        self.response_pload += redis_db.get_cmd_reset()
+        self.response_pload += self.redis_db.get_cmd_reset()
         # Si el commited conf indica reset lo agrego a la respuesta
         self.process_commited_conf()
         self.send_response()
         sys.stdout.flush()
+        #
         # Paso 7: Inserto las lineas en GDA.
         # if self.bd.insert_data(self.dlgid, self.data_line_list):
         #     # Si salio bien renombro el archivo a .dat para que el process lo use

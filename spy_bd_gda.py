@@ -566,12 +566,14 @@ class BDGDA:
         return False
 
     def get_dlg_remotos(self, dlgid, tag='GDA'):
+        '''
+        Consulta para tener los datos de los dataloggers remotos a los que hacer un broadcast via modbus.
+        '''
         log(module=__name__, function='get_dlg_remotos', dlgid=dlgid, level='SELECT', msg='start')
         if not self.connect():
             log(module=__name__, unction='get_dlg_remotos', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
             return None
-
-        sql = """SELECT medida, direccion_modbus, tipo, dlg
+        sql = """SELECT dlg, medida, rem_mbus_slave, rem_mbus_regaddress, tipo,codec
                 FROM spx_reenvio_modbus as rm INNER JOIN spx_unidades as u ON rm.dlgid_id = u.id
                 WHERE u.dlgid = '{}'""".format(dlgid)
         try:
@@ -581,24 +583,24 @@ class BDGDA:
             log(module=__name__, function='get_dlg_remotos', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
             return None
 
-        d = dict()
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
-            log(module=__name__, server=self.server, function='get_dlg_remotos', dlgid=dlgid,msg='ERROR: GDA exec EXCEPTION {}'.format(err_var))
+            log(module=__name__, server=self.server, function='get_dlg_remotos', dlgid=dlgid, msg='ERROR: GDA exec EXCEPTION {}'.format(err_var))
             return None
 
         results = rp.fetchall()
+        # Armo un dict con keys que sean tuplas (dlgid, medida)
         d = dict()
         for row in results:
-            print("ROW={}".format(row))
-            log(module=__name__, server=self.server, function='get_dlg_remotos', dlgid=dlgid, level='SELECT', msg='LINE={}'.format(raw))
-            medida_name, mbus_addr, tipo, dlg_remoto = row
-            d[dlg_remoto]['MEDIDA_NAME'] = medida_name
-            d[dlg_remoto]['MBUS_ADDR'] = mbus_addr
-            d[dlg_remoto]['TIPO'] = tipo
-            d[dlg_remoto]['DLG_REMOTO'] = dlg_remoto
-
+            #log(module=__name__, server=self.server, function='get_dlg_remotos', dlgid=dlgid, level='SELECT', msg="ROW={}".format(row))
+            dlg_rem, medida, mbus_slave, mbus_regaddr, tipo,codec = row
+            #log(module=__name__, server=self.server, function='get_dlg_remotos', dlgid=dlgid, level='SELECT', msg="dlg_rem={0},medida={1}, mbus_slave={2}, mbus_regaddr={3}, tipo={4},codec={5}".format(dlg_rem, medida, mbus_slave, mbus_regaddr, tipo, codec))
+            d[dlg_rem, medida] = dict()
+            d[dlg_rem,medida]['MBUS_SLAVE'] = mbus_slave
+            d[dlg_rem,medida]['MBUS_REGADDR'] = mbus_regaddr
+            d[dlg_rem,medida]['TIPO'] = tipo
+            d[dlg_rem,medida]['CODEC'] = codec
         return d
 
 
