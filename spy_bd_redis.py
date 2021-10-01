@@ -167,15 +167,18 @@ class Redis():
         #
 
     def insert_bcast_line_old(self, list_old_format):
-        APP_FOLDER = Config['CALLBACKS_PATH']['cbk_path']
-        sys.path.insert(1, APP_FOLDER)
-        #from drv_dlg import mbusWrite
+        #APP_FOLDER = Config['CALLBACKS_PATH']['cbk_path']
+        #print(APP_FOLDER)
+        #sys.path.insert(1, APP_FOLDER)
+        #from __CORE__.drv_dlg import mbusWrite
+        #from __CORE__.drv_config import rddbhost
+        from spy_utils import mbusWrite
 
         # Inserta lineas MODBUS en el viejo formato.
         for t in list_old_format:
             (dlgid, register, dataType, value) = t
-            #mbusWrite(dlgid, register, dataType, value)
-            print(t)
+            mbusWrite(dlgid, int(register), dataType, value)
+        
 
     def execute_callback(self):
         '''
