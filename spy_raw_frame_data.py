@@ -14,7 +14,6 @@ import sys
 from spy_raw_frame_data_daemon import insert_GDA_process_daemon
 from spy_raw_frame_callbacks_daemon import callbacks_process_daemon
 import signal
-
 # ------------------------------------------------------------------------------
 class RAW_DATA_frame:
     # Esta clase esta especializada en los frames de datos.
@@ -147,7 +146,8 @@ class RAW_DATA_frame:
         d_line = u_dataline_to_dict(line)
         # Creo un dict() donde voy a tener para c/dlgid remoto la linea redis que va a ir creciendo en la medida que
         # hallan mas variables para enviarle.
-        d_redis = dict()
+        d_redis_bcast = dict()
+        list_old_format = list()
         #
         for key in d.keys():
             # Paso 1: Obtengo los datos de un datalogger remoto( las claves creadas son una tupla
@@ -165,33 +165,46 @@ class RAW_DATA_frame:
             # Paso 3: Armo la linea redis [1,0,1,6,u16,c3210,1122]
             # El parametro modbus nro_regs y fcode lo debo inferir. En proximas versiones lo leo de la bd de lo remotos.
             nro_regs = 2
+            tipo_old_format = 'float'
             if tipo.upper() == 'I16' or tipo.upper() == 'U16':
                 nro_regs = 1
+                tipo_old_format = 'integer'
             # 1 reg(2bytes) lo escribimos con codigo 6 y 2 regs(4bytes) con codigo 16
             fcode = 6
             if nro_regs == 2:
                 fcode = 16
-
-            redis_part_line = "[{0},{1},{2},{3},{4},{5},{6}]".format(mbus_slave,mbus_regaddr,nro_regs,fcode,tipo.upper(),codec.upper(),valor)
-            #log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='{0}: mbus_line={1}'.format(dlg_rem, redis_part_line))
             #
-            # Leo las posibles entradas ( linea mbus) que ya hallan para el datalogger
-            redis_line = d_redis.get( (dlg_rem,'REDIS_LINE'),'')
+            # Armo la linea redis.
+            # No importa la version del firmware. Si tiene configurados equipos remotos, genero la linea en modbus y
+            # en broadcast.
+            # Cual usar lo va a determinar la version del equipo remoto cuando se conecte.
+            # BROADCAST ( NEW)
+            bcast_part_line = "[{0},{1},{2},{3},{4},{5},{6}]".format(mbus_slave,mbus_regaddr,nro_regs,fcode,tipo.upper(),codec.upper(),valor)
+            #log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='{0}: bcast_line={1}'.format(dlg_rem, bcast_part_line))
+            # Leo las posibles entradas que ya hallan para el datalogger
+            bcast_line = d_redis_bcast.get( (dlg_rem,'REDIS_LINE'),'')
             # Agrego los datos de la variable local a enviar.
-            redis_line += redis_part_line
+            bcast_line += bcast_part_line
             # Guardo nuevamente la linea compuesta
-            d_redis[(dlg_rem,'REDIS_LINE')] = redis_line
+            d_redis_bcast[(dlg_rem,'REDIS_LINE')] = bcast_line
+            # MODBUS ( OLD )
+            tmbus = tuple([dlg_rem, mbus_regaddr, tipo_old_format, valor] )
+            list_old_format.append(tmbus)
 
         # Termine de procesar y crear todas las lineas: Para c/dlgid remoto tengo una linea compuesta: las inserto
-        for key in d_redis.keys():
+        # BROADCAST
+        for key in d_redis_bcast.keys():
             dlg_rem,_ = key
-            redis_brodcast_line = d_redis.get( (dlg_rem,'REDIS_LINE'),'')
+            redis_brodcast_line = d_redis_bcast.get( (dlg_rem,'REDIS_LINE'),'')
             try:
-                self.redis_db.insert_bcast_line( dlg_rem, redis_brodcast_line, self.fw_version )
+                self.redis_db.insert_bcast_line_new( dlg_rem, redis_brodcast_line, self.fw_version )
             except:
                 log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, msg='ERROR REDIS INSERT BCAST: line:{}'.format(redis_brodcast_line))
             #
             log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='{0}: redis_bcast_line: {1}'.format(dlg_rem, redis_brodcast_line))
+        #
+        # MODBUS
+        self.redis_db.insert_bcast_line_old(list_old_format)
         #
         log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='End')
         return
@@ -233,9 +246,7 @@ class RAW_DATA_frame:
         # Transmision de una o mas varibles locales a equipos remotos. Este broadcast se hace de un equipo
         # central a remotos.
         # El central escribe en la redis de los remotos los datos de la variable a re-enviar.
-        # Version >= 400:
-        if self.fw_version >= 400:
-            self.broadcast_local_vars()
+        self.broadcast_local_vars()
         # ------------------------------------------------------------------------------------------------
         # OUTPUTS:
         # Si hay comandos en la redis los incorporo a la respuesta ( modbus )
