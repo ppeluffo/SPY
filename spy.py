@@ -2,6 +2,9 @@
 #!/usr/bin/python3 -u
 """
 
+Version 2.1 @ 2021-10-01
+- Broadcast de medidas locales a dataloggers remotos por modbus.
+
 Version 2.0 @ 2021-09-28
 - Modbus + redis
 - Pilotos
