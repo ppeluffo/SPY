@@ -1,6 +1,9 @@
 #!/usr/bin/python3 -u
 """
 
+Version 2.1a @ 2021-10-01
+- Uniformizo envio de broadcast de y a todas las versiones.
+
 Version 2.1 @ 2021-10-01
 - Broadcast de medidas locales a dataloggers remotos por modbus.
 

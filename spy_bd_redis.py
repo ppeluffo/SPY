@@ -13,6 +13,7 @@ pip3 install redis
 import redis
 from spy_log import log
 from spy_config import Config
+import sys
 
 # ------------------------------------------------------------------------------
 
@@ -154,18 +155,27 @@ class Redis():
 
         return (response)
 
-    def insert_bcast_line(self, dlg_rem=None, redis_brodcast_line=None, fw_version=200 ):
+    def insert_bcast_line_new(self, dlg_rem=None, redis_line=None, fw_version=200 ):
         '''
-        Inserta en la redis de los dlg remotos, la linea de modbus en la variable BROADCAST.
-        Pendiente: Verificar que la version de los dlgremotos sea >= 400.
+        Inserta en la redis de los dlg remotos, la linea de modbus en la variable BROADCAST y/o MODBUS
         '''
-        if fw_version < 400:
-            return
         if self.connected:
-            if redis_brodcast_line is not None:
-                self.rh.hset(dlg_rem, 'BROADCAST', redis_brodcast_line)
+            if redis_line is not None:
+                self.rh.hset(dlg_rem, 'BROADCAST', redis_line)
             else:
                 elf.rh.hset(dlg_rem, 'BROADCAST', 'NUL')
+        #
+
+    def insert_bcast_line_old(self, list_old_format):
+        APP_FOLDER = Config['CALLBACKS_PATH']['cbk_path']
+        sys.path.insert(1, APP_FOLDER)
+        #from drv_dlg import mbusWrite
+
+        # Inserta lineas MODBUS en el viejo formato.
+        for t in list_old_format:
+            (dlgid, register, dataType, value) = t
+            #mbusWrite(dlgid, register, dataType, value)
+            print(t)
 
     def execute_callback(self):
         '''
