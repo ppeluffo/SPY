@@ -1,5 +1,10 @@
 #!/usr/bin/python3 -u
+##!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
+
+
 """
+Version 2.1b @ 2021-10-04
+- Corrijo un bug que hacia que las versiones viejas quieran configurar siempre el modbus
 
 Version 2.1a @ 2021-10-01
 - Uniformizo envio de broadcast de y a todas las versiones.
