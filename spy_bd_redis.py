@@ -177,7 +177,8 @@ class Redis():
         # Inserta lineas MODBUS en el viejo formato.
         for t in list_old_format:
             (dlgid, register, dataType, value) = t
-            mbusWrite(dlgid, int(register), dataType, value)
+            #mbusWrite(dlgid, int(register), dataType, value)
+            mbusWrite(dlgid, register, dataType, value)
         
 
     def execute_callback(self):
