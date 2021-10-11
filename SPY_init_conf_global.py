@@ -97,13 +97,14 @@ class INIT_CONF_GLOBAL:
         # Checksum parametros base
         #log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT',msg='DEBUG_base')
         try:
+            # BASE
             a = int(self.payload_dict.get('BASE', '0'), 16)
             b = self.PV_checksum_base(self.dlgbdconf_dict)
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: dlg={0}, bd={1}'.format(hex(a),hex(b)))
             if a != b:
                 self.response_pload += ';BASE'
 
-            # checksum parametros analog
+            # ANALOG
             #log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='DEBUG_analog')
             a = int(self.payload_dict.get('AN', '0'), 16)
             b = self.PV_checksum_analog(self.dlgbdconf_dict)
@@ -111,34 +112,37 @@ class INIT_CONF_GLOBAL:
             if a != b:
                 self.response_pload += ';ANALOG'
 
-            # chechsum parametros digital
+            # DIGITAL
             a = int(self.payload_dict.get('DG', '0'), 16)
             b = self.PV_checksum_digital(self.dlgbdconf_dict)
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_DG: dlg={0}, bd={1}'.format(hex(a),hex(b)))
             if a != b:
                 self.response_pload += ';DIGITAL'
 
-            # chechsum parametros contadores
+            # CONTADORES
             a = int(self.payload_dict.get('CNT', '0'), 16)
             b = self.PV_checksum_counters(self.dlgbdconf_dict)
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_CNT: dlg={0}, bd={1}'.format(hex(a),hex(b)))
             if a != b:
                 self.response_pload += ';COUNTERS'
 
-            # chechsum parametros modbus
-            a = int(self.payload_dict.get('MB','0'), 16)
-            b = self.PV_checksum_modbus(self.dlgbdconf_dict)
-            log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-            if a != b:
-                self.response_pload += ';MBUS_LOW;MBUS_MED;MBUS_HIGH;'
+            # MODBUS:
+            # A partir de la version 4.0.0 es estandard y no aplicacion.
+            if self.fw_version >= 400:
+                a = int(self.payload_dict.get('MB','0'), 16)
+                b = self.PV_checksum_modbus(self.dlgbdconf_dict)
+                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+                if a != b:
+                    self.response_pload += ';MBUS_LOW;MBUS_MED;MBUS_HIGH;'
 
-            # chechsum parametros aplicacion
+            # APLICACION
             a = int(self.payload_dict.get('APP', '0'), 16)
             b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
             log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
             if a != b:
                 self.response_pload += ';APLICACION'
 
+            # RANGE
             if self.fw_version < 400:
                 # chechsum parametros range
                 a = int(self.payload_dict.get('RG', '0'),16)
@@ -147,19 +151,14 @@ class INIT_CONF_GLOBAL:
                 if a != b:
                     self.response_pload += ';RANGE'
 
+            # PSENSOR
+            if self.fw_version < 400:
                 # chechsum parametros psensor
                 a = int(self.payload_dict.get('PSE', '0'),16)
                 b = self.PV_checksum_psensor(self.dlgbdconf_dict)
                 log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
                 if a != b:
                     self.response_pload += ';PSENSOR'
-
-                # chechsum parametros aplicacion
-                a = int(self.payload_dict.get('APP', '0'), 16)
-                b = self.PV_checksum_aplicacion(self.dlgbdconf_dict)
-                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_APP: dlg={0}, bd={1}'.format(hex(a),hex(b)))
-                if a != b:
-                    self.response_pload += ';APLICACION'
 
             self.send_response()
 

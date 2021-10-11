@@ -68,8 +68,6 @@ class INIT_CONF_APP:
 
     def init_app_v400_piloto(self):
         self.response = "PILOTO;"
-        hhmm_default = 0
-        presion_default = 0
         #
         pulseXrev =  int(self.dconf.get(('PILOTO', 'PulseXrev'), 3000))
         pwidth = int(self.dconf.get(('PILOTO', 'pwidth'), 20))
@@ -77,13 +75,13 @@ class INIT_CONF_APP:
         #
         for slot in range(0,12):
             sHHMM = 'HHMM{}'.format(slot)
-            hhmm =  self.dconf.get(('PILOTO', sHHMM), hhmm_default)
+            hhmm =  self.dconf.get(('PILOTO', sHHMM), '0000')
             hhmm = hhmm.replace(":", "")
             hhmm = int(hhmm)
             sPRES = 'P{}'.format(slot)
-            pres = float(self.dconf.get(('PILOTO', sPRES), presion_default))
+            pres = float(self.dconf.get(('PILOTO', sPRES), '0'))
             if pres == '':
-                pres = presion_default
+                pres = 0.0
             self.response += 'SLOT%d:%04d,%.02f;' % (slot, hhmm, pres)
 
         log(module=__name__, function='DEBUG PILOTO SLOTS', dlgid=self.dlgid, msg='RSP={}'.format(self.response))
