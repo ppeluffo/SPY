@@ -207,6 +207,10 @@ class INIT_CONF_GLOBAL:
 
         counters_hw = d.get(('BASE', 'HW_CONTADORES'), 'OPTO')
 
+        # Nuevos parametros incorporados en version 4.0.1a
+        mb_ctrl_slave = int(d.get(('BASE', 'MBUS_CTL_SLAVE'), '0'))
+        mb_ctrl_address = int(d.get(('BASE', 'MBUS_CTL_ADDR'), '0'))
+
         # A partir de la version 3.0.4 manda si reporta o no la bateria( siempre en 5CH, configurable en 8CH)
         bateria = d.get(('BASE', 'BAT'), 'OFF')
 
@@ -218,7 +222,10 @@ class INIT_CONF_GLOBAL:
         # Debo hacerlo igual a como lo hago en el datalogger.
         cks_str = ''
 
-        if fw_version >= 400:
+        if fw_version >= 401:
+            cks_str = '{0},{1},{2},{3},{4},{5},'.format(timerdial, timerpoll, timepwrsensor, counters_hw, mb_ctrl_slave, mb_ctrl_address )
+            cks = self.PV_calcular_hash_checksum(cks_str)
+        elif fw_version >= 400:
             cks_str = '{0},{1},{2},{3},'.format(timerdial, timerpoll, timepwrsensor, counters_hw )
             cks = self.PV_calcular_hash_checksum(cks_str)
         elif fw_version >= 304:
@@ -437,6 +444,7 @@ class INIT_CONF_GLOBAL:
     def PV_checksum_modbus(self, d):
         # chechsum parametros modbus
         # MODBUS;MBWT:%03d;
+        cks_str = ''
         mbwt = int(d.get(('BASE', 'MBUS_WAITTIME'), '1'))
         cks_str = 'MODBUS;MBWT:%03d' % mbwt
 

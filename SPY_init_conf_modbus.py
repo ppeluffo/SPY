@@ -108,7 +108,7 @@ class INIT_CONF_MBUS_MED:
         El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
-        pload = 'CLASS:MBUS_MED;{}'.format(self.response )
+        pload = 'CLASS:MBUS_MED{}'.format(self.response )
         u_send_response('INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
@@ -147,7 +147,7 @@ class INIT_CONF_MBUS_HIGH:
         El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
-        pload = 'CLASS:MBUS_HIGH;{}'.format(self.response )
+        pload = 'CLASS:MBUS_HIGH{}'.format(self.response )
         u_send_response('INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return

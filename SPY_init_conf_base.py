@@ -45,10 +45,14 @@ class INIT_CONF_BASE:
 
         self.pwrs_start = int( dconf.get(('BASE', 'PWRS_HHMM1'), 0))
         self.pwrs_end = int( dconf.get(('BASE', 'PWRS_HHMM2'), 0))
-
         self.counters_hw = dconf.get(('BASE', 'HW_CONTADORES'),'OPTO')
+        # Nuevos parametros incorporados en version 4.0.1a
+        self.mb_ctrl_slave = int(dconf.get(('BASE', 'MBUS_CTL_SLAVE'), '0'))
+        self.mb_ctrl_address = int(dconf.get(('BASE', 'MBUS_CTL_ADDR'), '0'))
 
-        if self.fw_version >= 400:
+        if self.fw_version >= 401:
+            self.response = "TDIAL:{0};TPOLL:{1};PWST:{2};HW_CNT:{3};CTRL_SLA:{4};CTRL_ADDR:{5};".format(self.timerdial, self.timerpoll, self.timepwrsensor, self.counters_hw, self.mb_ctrl_slave, self.mb_ctrl_address)
+        elif self.fw_version >= 400:
             self.response = "TDIAL:{0};TPOLL:{1};PWST:{2};HW_CNT:{3};".format(self.timerdial, self.timerpoll, self.timepwrsensor,self.counters_hw )
         else:
             self.response = "TDIAL:{0};TPOLL:{1};PWST:{2};PWRS:{3},{4},{5};HW_CNT:{6};BAT:{7}".format(self.timerdial,self.timerpoll,self.timepwrsensor,self.pwrs_modo, self.pwrs_start, self.pwrs_end, self.counters_hw,self.reporta_bateria )

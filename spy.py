@@ -1,8 +1,13 @@
-#!/usr/bin/python3 -u
+#!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
+##!/usr/bin/python3 -u
 ##!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 
 
 """
+Version 2.1c @ 2021-10-05
+- Agrego modificaciones para configurar parametros del PLC remoto al que mandar datos
+  de control y status.
+
 Version 2.1b @ 2021-10-04
 - Corrijo un bug que hacia que las versiones viejas quieran configurar siempre el modbus
 
