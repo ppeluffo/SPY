@@ -151,4 +151,16 @@ class RAW_INIT_frame:
             init_conf_piloto_slots.process()
             return
 
+        if payload_class == 'CONF_SMS':
+            from SPY_init_conf_sms import INIT_CONF_SMS
+            init_conf_sms = INIT_CONF_SMS(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_sms.process()
+            return
+
+        if payload_class == 'CONF_GENPULSOS':
+            from SPY_init_conf_genpulsos import INIT_CONF_GENPULSOS
+            init_conf_genpulsos = INIT_CONF_GENPULSOS(self.dlgid, self.version, dlgbdconf_dict)
+            init_conf_genpulsos.process()
+            return
+
         return

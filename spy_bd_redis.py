@@ -91,7 +91,7 @@ class Redis():
         #
         return (response)
 
-    def get_cmd_modbus(self,fw_version=200 ):
+    def get_cmd_modbus(self,fw_version=200, rcv_mbus_tag_id=None, rcv_mbus_tag_val=None ):
         '''
         Los lineas a enviar por modbus pueden estar en 2 variables de REDIS: MODBUS y BROADCAST.
         En las versiones >= 400 se usan BROADCAST.
@@ -112,10 +112,30 @@ class Redis():
                 # BROADCAST:
                 if self.rh.hexists(self.dlgid, 'BROADCAST'):
                     mbus_line = self.rh.hget(self.dlgid, 'BROADCAST').decode()
+                    '''
+                    if self.dlgid == 'YCHTEST':
+                        mbus_line = '[2,1962,2,16,FLOAT,C1032,1.00]'
+                        mbus_line += '[2,2032,2,16,FLOAT,C1032,2.00]'
+                        mbus_line += '[2,2032,2,16,FLOAT,C1032,3.00]'
+                        mbus_line += '[2,2032,2,16,FLOAT,C1032,4.00]'
+                        mbus_line += '[2,2032,2,16,FLOAT,C1032,5.00]'
+                        mbus_line += '[2,2032,2,16,FLOAT,C1032,6.00]'
+                        mbus_line += '[2,2032,2,16,FLOAT,C1032,7.00]'
+                        #mbus_line += '[2,2032,2,16,FLOAT,C1032,8.00]'
+                    '''
                     if mbus_line != 'NUL':
                         log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='REDIS-MODBUS-BCAST:{}'.format(mbus_line))
                         response = 'MBUS=%s;' % mbus_line
-                self.rh.hset(self.dlgid, 'BROADCAST', 'NUL')
+
+                # Version 20220307: Borro cuando llega un ACK
+                # Version 20220204: Ajuste para reintentar el comando si el datalogger indico que no pudo procesarlo
+                '''
+                if rcv_nack == 'ACK':
+                    self.rh.hset(self.dlgid, 'BROADCAST', 'NUL')
+                elif rcv_nack == 'NACK':
+                    log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='ERROR: NACK rcvd. No borro comando.')
+                '''
+
         else:
             log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
         #
@@ -161,25 +181,26 @@ class Redis():
         '''
         if self.connected:
             if redis_line is not None:
-                self.rh.hset(dlg_rem, 'BROADCAST', redis_line)
+                #self.rh.hset(dlg_rem, 'BROADCAST', redis_line)  # YCH -> No se escribe el broadcast en esta linea. Se usa la funcion mbusWrite para ello
+                pass
             else:
-                elf.rh.hset(dlg_rem, 'BROADCAST', 'NUL')
+                self.rh.hset(dlg_rem, 'BROADCAST', 'NUL')
         #
 
     def insert_bcast_line_old(self, list_old_format):
-        #APP_FOLDER = Config['CALLBACKS_PATH']['cbk_path']
-        #print(APP_FOLDER)
-        #sys.path.insert(1, APP_FOLDER)
-        #from __CORE__.drv_dlg import mbusWrite
-        #from __CORE__.drv_config import rddbhost
         from spy_utils import mbusWrite
-
-        # Inserta lineas MODBUS en el viejo formato.
+        
+        # Inserta lineas MODBUS en el viejo formato
         for t in list_old_format:
             (dlgid, register, dataType, value) = t
-            #mbusWrite(dlgid, int(register), dataType, value)
-            mbusWrite(dlgid, register, dataType, value)
         
+            # llamo a la funcion para escribir el key MODBUS de redis en cada ejecucion del for
+            mbusWrite(dlgid, register, dataType, value)
+            
+                    
+        # si no hay datos llamo a la funcion por si le queda en cola algo para transmitir
+        if not list_old_format:
+            mbusWrite(self.dlgid, register=None, dataType=None, value=None)
 
     def execute_callback(self):
         '''

@@ -133,7 +133,16 @@ class INIT_CONF_GLOBAL:
                 b = self.PV_checksum_modbus(self.dlgbdconf_dict)
                 log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_MBUS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
                 if a != b:
-                    self.response_pload += ';MBUS_LOW;MBUS_MED;MBUS_HIGH;'
+                    self.response_pload += ';MBUS_LOW;MBUS_MED;MBUS_HIGH'
+
+            # SMS:
+            # A partir de la version 4.0.2 es estandard.
+            if self.fw_version >= 402:
+                a = int(self.payload_dict.get('SMS','0'), 16)
+                b = self.PV_checksum_sms(self.dlgbdconf_dict)
+                log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='CKS_SMS: dlg={0}, bd={1}'.format(hex(a),hex(b)))
+                if a != b:
+                    self.response_pload += ';SMS'
 
             # APLICACION
             a = int(self.payload_dict.get('APP', '0'), 16)
@@ -184,6 +193,21 @@ class INIT_CONF_GLOBAL:
         for c in line:
             #cks ^= ord(c)
             cks = (cks + ord(c)) % 256
+        return cks
+
+    def PV_checksum_sms(self, d):
+        sms_auth_nbr0 = d.get(('SMS', 'SMS_AUTH_00'), '99000000')
+        sms_auth_nbr1 = d.get(('SMS', 'SMS_AUTH_01'), '99000001')
+        sms_auth_nbr2 = d.get(('SMS', 'SMS_AUTH_02'), '99000002')
+        cks_str = 'SMS_NBR_0,{0};SMS_NBR_1,{1};SMS_NBR_2,{2};'.format(sms_auth_nbr0, sms_auth_nbr1, sms_auth_nbr2)
+        cks_str +=  'S_DICT0:-1,FRAME;'
+        for i in range(1,10):
+            sms_chmbus = d.get(('SMS','SMS_O0{}_CHMBUS'.format(i)), '-1')
+            sms_text = d.get(('SMS', 'SMS_O0{}_TEXTO'.format(i)),'X')
+            cks_str += 'S_DICT{0}:{1},{2};'.format(i,sms_chmbus,sms_text)
+        cks = self.PV_calcular_hash_checksum(cks_str)
+        fw_version = u_get_fw_version(self.dlgbdconf_dict)
+        log(module=__name__, function='PV_checksum_sms', dlgid=self.dlgid, level='SELECT', msg='CKS_SMS: (fw={0}) [{1}][{2}]'.format(fw_version, cks_str, hex(cks)))
         return cks
 
 
@@ -310,10 +334,11 @@ class INIT_CONF_GLOBAL:
         cks_str = ''
         nro_counter_channels = int(self.payload_dict.get('NCNT', '0'))
         fw_version = u_get_fw_version(self.dlgbdconf_dict)
-        #log(module=__name__, function='PV_checksum_counters', dlgid=self.dlgid, level='SELECT', msg='fw_version={0}]'.format(fw_version))
+        # log(module=__name__, function='DEBUG PV_checksum_counters', dlgid=self.dlgid, level='SELECT', msg='fw_version={0}], nro_counter_channels={1}'.format(fw_version, nro_counter_channels))
         for ch in range(nro_counter_channels):
             ch_id = 'C{}'.format(ch)            # ch_id = C1
             modo = ''
+            # log(module=__name__, function='DEBUG PV_checksum_counters', dlgid=self.dlgid, level='SELECT',msg='ch_id={0}], modo={1}'.format(ch_id, modo))
 
             if fw_version >= 400:
                 if (ch_id, 'NAME') in d.keys():
@@ -404,9 +429,10 @@ class INIT_CONF_GLOBAL:
                 cks_str = self.PV_checksum_str_app_consigna(d)
             elif output_modo == 'PILOTO':
                 cks_str = self.PV_checksum_str_app_piloto(d)
+            elif output_modo == 'GENPULSOS':
+                cks_str = self.PV_checksum_str_app_genpulsos(d)
             else:
-                log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT',
-                    msg='ERROR: Aplicacion NEW No detectada en BD')
+                log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT', msg='ERROR: Aplicacion NEW No detectada en BD')
         else:
             # Aplicaciones anteriores
             output_modo = d.get(('BASE','APLICACION'),'OFF')
@@ -582,6 +608,12 @@ class INIT_CONF_GLOBAL:
             cks_str += '%s:%s,%04d,%02d,%02d,%c;' % (ch, name, addr, size, fcode, tipo)
         return cks_str
 
+
+    def PV_checksum_str_app_genpulsos(self,d):
+        pulsosXmt3 = int(d.get(('GENPULSOS', 'PULSOSXMT3'), '10'))
+        pulso_width = int(d.get(('GENPULSOS', 'PULSOWIDTH'), '10'))
+        cks_str = 'GENPULSOS;PXM3:%04d;PW:%04d' % ( pulsosXmt3, pulso_width )
+        return(cks_str)
 
 if __name__ == '__main__':
     str = "C0:PCAU,1.000,1000,100,LS;C1:X,0.100,100,10,LS;"

@@ -1,6 +1,6 @@
 #!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 ##!/usr/bin/python3 -u
-##!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
+
 
 
 """
@@ -79,6 +79,7 @@ from spy_raw_frame import *
 from spy_log import *
 from spy_config import Config
 
+version = '2.0.2 @ 2022-03-25'
 # -----------------------------------------------------------------------------
 # cgitb.enable()
 #
@@ -90,6 +91,7 @@ from spy_config import Config
 def print_error():
     print('Argumentos invalidos')
     print('USO: ./spy.py ')
+    print('VERSION: {}'.format(version))
     print('''
      DEBUG_CONF_AUTH
      DEBUG_CONF_UPDATE
@@ -109,6 +111,8 @@ def print_error():
      DEBUG_CONF_MBUS_MED
      DEBUG_CONF_MBUS_HIGH
      DEBUG_CONF_PILOTO
+     DEBUG_CONF_SMS
+     DEBUG_CONF_GENPULSOS
      
      DEBUG_CTL_SCAN
      DEBUG_DATA
@@ -244,6 +248,12 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'DEBUG_CONF_PILOTO':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_conf_app_piloto']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_SMS':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_sms']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 

@@ -1,6 +1,25 @@
 Listado de modificaciones al sistema SPY.
 
 ----------------------------------------------------------------------
+Version 2.0.2 @ 2022-03-25:
+- Hay un bug en versiones anteriores del firmware que hacen que en ciertas
+  condiciones se manden frames con todos los datos en 0.
+  DATE:000000;TIME:000000;PMP:0.00;bt:0.00
+  Generamos un filtro que los frames con DATE:000000;TIME:000000 los descarte
+  en forma temprana
+----------------------------------------------------------------------
+Version 2.0.1 @ 2022-03-18:
+- Agrego el manejo de la aplicacion GENPULSOS
+  Modifico SPY_init_conf_app.py y SPY_init_conf_global.py
+----------------------------------------------------------------------
+Version 2.0.1 @ 2022-03-07:
+-Modifico spy_raw_frame_data en el process para considerar que pueda venir
+ una flag de modbus de ACK o NACK o nada.
+ En get_cmd_modbus, cuando viene ACK es que borro el frame en la redis.
+- Agrego la variable mbus_tag  que la seteo al extraer el ACK o NACK y la
+  paso a la funcion de redis.
+----------------------------------------------------------------------
+
 Version 2.0.0 @ 2020-09-03
 Incorporo las facilidades para MODBUS.
 1- Configuracion:

@@ -17,7 +17,7 @@ import signal
 # ------------------------------------------------------------------------------
 class RAW_DATA_frame:
     # Esta clase esta especializada en los frames de datos.
-    # DLGID=TEST01&TYPE=DATA&VER=2.0.6&PLOAD=
+    # DLGID=TEST01&TYPE=DATA&VER=2.0.6&PLOAD=NACK;
     # CTL:1;DATE:20191022;TIME:110859;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
     # CTL:2;DATE:20191022;TIME:110958;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
     # CTL:3;DATE:20191022;TIME:111057;PB:-2.59;DIN0:0;DIN1:0;CNT0:0.000;DIST:-1;bt:12.33;
@@ -32,7 +32,10 @@ class RAW_DATA_frame:
         self.control_code_list = list()
         self.data_line_list = list()
         self.redis_db = None
+        self.rcv_mbus_tag_id = None
+        self.rcv_mbus_tag_val = None
         log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
+        #log(module=__name__, function='__init__', dlgid=self.dlgid, msg='DEBUG PAYLOAD {0}'.format(self.payload_str))
         return
 
     def send_response(self):
@@ -213,6 +216,27 @@ class RAW_DATA_frame:
         # Realizo todos los pasos necesarios en el payload paragenerar la respuesta al datalooger e insertar los datos en GDA
         log(module=__name__, function='process', dlgid=self.dlgid, msg='START')
 
+        # Version 20220309: Si el payload tiene un ACK o NACK, estraigo el MBUS_TAG y filtro el payload para analizarlo.
+        lines = self.payload_str.split('CTL')
+        self.payload_str = ''
+        for line in lines[1:]:
+            # Elimino lineas en blanco por BUG001 del firmware
+            if 'DATE:000000' in line:
+                continue
+            self.payload_str = self.payload_str + 'CTL' + line
+
+        # El ack,nack lo tiene la linea 0 si lo tiene !!!
+        '''
+        if lines[0] != '':
+            tags = lines[0].split(':')
+            # Puede haber una version que solo mande ACK o NACK sin el tag_val
+            self.rcv_mbus_tag_id = tags[0]  # tag_id
+            if len(tags) > 1:
+                self.rcv_mbus_tag_val = tags[1]
+            else:
+                self.rcv_mbus_tag_val = -1
+            log(module=__name__, function='process', dlgid=self.dlgid, msg='{0},{1}'.format(self.rcv_mbus_tag_id, self.rcv_mbus_tag_val))
+        '''
         # Paso 1: Guardo los datos en un archivo temporal para que luego lo procese el 'process'
         ( tmp_file, dat_file ) = self.save_payload_in_file()
 
@@ -228,19 +252,22 @@ class RAW_DATA_frame:
             log(module=__name__, function='process', dlgid=self.dlgid, msg='ERROR REDIS INSERT: len:{0}, line:{1}'.format(len(self.data_line_list), self.data_line_list))
 
         # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
-        log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
+        # log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
         ##if redis_db.execute_callback():		# yosniel cabrera -> elimine la condicion de que preguntara por type en redis antes de llamar al callback
         # self.process_callbacks()
+
+        '''
+        DEBUG
         if self.bd.is_automatismo(self.dlgid) or self.redis_db.execute_callback():
             log(module=__name__, function='process', dlgid=self.dlgid, msg='Start CallBacks Daemon')
             callbacks_process_daemon(self)
+        '''
 
         # Paso 5: Preparo la respuesta
         # Mando el line_id de la ultima linea recibida
         self.response_pload += 'RX_OK:{0};'.format(self.control_code_list[-1])
         # Agrego el clock para resincronizar
         self.response_pload += 'CLOCK:{};'.format(datetime.now().strftime('%y%m%d%H%M'))
-
         #------------------------------------------------------------------------------------------------
         # 2021-09-30
         # Transmision de una o mas varibles locales a equipos remotos. Este broadcast se hace de un equipo
@@ -255,7 +282,7 @@ class RAW_DATA_frame:
         # ------------------------------------------------------------------------------------------------
         # MODBUS:
         # Si hay comandos en la redis para enviar por modbus, lo hago aqui
-        self.response_pload += self.redis_db.get_cmd_modbus(self.fw_version)
+        self.response_pload += self.redis_db.get_cmd_modbus( fw_version=self.fw_version, rcv_mbus_tag_id=self.rcv_mbus_tag_id, rcv_mbus_tag_val=self.rcv_mbus_tag_val )
         # ------------------------------------------------------------------------------------------------
         # Redis::Pilotos
         self.response_pload += self.redis_db.get_cmd_pilotos(self.fw_version)
@@ -273,9 +300,12 @@ class RAW_DATA_frame:
         # else:
         #     # Algo anduvo mal y no pude insertarlo en GDA
         #     move_file_to_error_dir(tmp_file)
+        '''
+        DEBUG
         log(module=__name__, function='process', dlgid=self.dlgid, msg='Start Daemon')
         root_path = os.path.abspath('') # Obtengo la carpeta actual para que el demonio no se pierda.
         insert_GDA_process_daemon(self, tmp_file, dat_file, root_path)
-
+        log(module=__name__, function='process', dlgid=self.dlgid, msg='END')
+        '''
         return
 

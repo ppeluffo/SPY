@@ -20,7 +20,7 @@ class INIT_CONF_APP:
         self.dconf = dconf
         self.aplicacion = dconf.get(('BASE', 'APLICACION'), 'OFF')
         self.response = ''
-        # log(module=__name__, function='DEBUG init APP', dlgid=self.dlgid, msg='aplicacion:{}'.format(self.aplicacion))
+        # log(module=__name__, function='DEBUG init APP', dlgid=self.dlgid, msg='aplicacion:{0}'.format(self.aplicacion))
         #
         if self.fw_version >= 400:
             self.init_app_v400()
@@ -53,6 +53,8 @@ class INIT_CONF_APP:
             self.init_app_v400_consigna()
         elif self.aplicacion == 'PILOTO':
             self.init_app_v400_piloto()
+        elif self.aplicacion == 'GENPULSOS':
+            self.init_app_v400_genpulsos()
         else:
             self.init_app_v400_off()
 
@@ -64,6 +66,13 @@ class INIT_CONF_APP:
         cons_hhmm1 = int(self.dconf.get(('CONS', 'HHMM1'), '0000'))
         cons_hhmm2 = int(self.dconf.get(('CONS', 'HHMM2'), '0000'))
         self.response = "CONSIGNA;HHMM1:%04d;HHMM2:%04d;" % ( cons_hhmm1, cons_hhmm2)
+        return
+
+    def init_app_v400_genpulsos(self):
+        log(module=__name__, function='init_app_v400_genpulsos', dlgid=self.dlgid, msg='aplicacion:{}'.format(self.aplicacion))
+        pulsosXmt3 = int(self.dconf.get(('GENPULSOS', 'PULSOSXMT3'), '10'))
+        pulso_width = int(self.dconf.get(('GENPULSOS', 'PULSOWIDTH'), '10'))
+        self.response = "GENPULSOS;PULSOSXMT3:%d;PULSOWIDTH:%d;" % ( pulsosXmt3, pulso_width)
         return
 
     def init_app_v400_piloto(self):
