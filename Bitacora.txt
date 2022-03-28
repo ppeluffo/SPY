@@ -1,5 +1,12 @@
 Listado de modificaciones al sistema SPY.
 
+Version 2.0.3 @ 2022-03-26:
+- Al procesar los INITS, recien en el GLOBAL leo la BD de configuracion
+y la dejo en Redis. De este modo los sigientes tipos de inits no necestitan
+leer la GDA sino que la levantan de Redis.
+- Creo el archivo 'spy_bd_redis_conf.py'
+- Modifico el archivo 'spy_raw_frame_init.py'
+- Modifico el archivo 'spy_raw_frame_data.py'
 ----------------------------------------------------------------------
 Version 2.0.2 @ 2022-03-25:
 - Hay un bug en versiones anteriores del firmware que hacen que en ciertas

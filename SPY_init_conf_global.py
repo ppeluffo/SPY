@@ -87,15 +87,11 @@ class INIT_CONF_GLOBAL:
         d['SIMID'] = self.payload_dict.get('SIMID', 'ERROR')
         d['COMMITED_CONF'] = 0
         d['UID'] = 'ver_bdspy'
-        # Actualizo la GDA con estos datos.
-        bd = BDGDA( modo = Config['MODO']['modo'])
-        bd.update(self.dlgid,d)
+
         # Creo un registo inicialiado en la redis.
-        redis_db = Redis(self.dlgid).create_rcd()
+        Redis(self.dlgid).create_rcd()
 
         # Analizo los checksums individuales
-        # Checksum parametros base
-        #log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT',msg='DEBUG_base')
         try:
             # BASE
             a = int(self.payload_dict.get('BASE', '0'), 16)
@@ -171,9 +167,14 @@ class INIT_CONF_GLOBAL:
 
             self.send_response()
 
+            # Actualizo la GDA con estos datos. Lo retardo al final para poder responder rapido
+            bd = BDGDA( modo = Config['MODO']['modo'])
+            bd.update(self.dlgid,d)
+
         except: 
             log(module=__name__, function='process', dlgid=self.dlgid, level='ERROR', msg='INIT_CONF_GLOBAL: Error: Linea mal formada!!!')
 
+        log(module=__name__, function='process', dlgid=self.dlgid, level='SELECT', msg='end')
         return
 
 
@@ -182,7 +183,6 @@ class INIT_CONF_GLOBAL:
         for ch in line:
             checksum = hash_table[ (checksum ^ ord(ch))]
         return checksum
-
 
     def PV_calcular_ckechsum(self, line):
         '''
@@ -209,7 +209,6 @@ class INIT_CONF_GLOBAL:
         fw_version = u_get_fw_version(self.dlgbdconf_dict)
         log(module=__name__, function='PV_checksum_sms', dlgid=self.dlgid, level='SELECT', msg='CKS_SMS: (fw={0}) [{1}][{2}]'.format(fw_version, cks_str, hex(cks)))
         return cks
-
 
     def PV_checksum_base(self, d):
 
@@ -269,7 +268,6 @@ class INIT_CONF_GLOBAL:
         log(module=__name__, function='PV_checksum_base', dlgid=self.dlgid, level='SELECT', msg='CKS_BASE: (fw={0}) [{1}][{2}]'.format( fw_version, cks_str,hex(cks)))
         return cks
 
-
     def PV_checksum_analog(self, d):
         # Los canales analogicos van del 0 hasta el 7 ( maximo )
         # Pueden faltar algunos que no usemos por lo que no esten definidos.
@@ -291,7 +289,6 @@ class INIT_CONF_GLOBAL:
 
         log(module=__name__, function='PV_checksum_analog', dlgid=self.dlgid, level='SELECT', msg='CKS_AN ({0}ch): [{1}][{2}]'.format(nro_analog_channels, cks_str, hex(cks)))
         return cks
-
 
     def PV_checksum_digital(self, d):
         # Los canales digitales van del 0 hasta el 7 ( maximo )
@@ -324,7 +321,6 @@ class INIT_CONF_GLOBAL:
 
         log(module=__name__, function='PV_checksum_digital', dlgid=self.dlgid, level='SELECT', msg='CKS_DG ({0}ch): [{1}][{2}]'.format(nro_digital_channels,cks_str,hex(cks)))
         return cks
-
 
     def PV_checksum_counters(self, d):
         # Los canales contadores son maximo 2
@@ -383,7 +379,6 @@ class INIT_CONF_GLOBAL:
         log(module=__name__, function='PV_checksum_counters', dlgid=self.dlgid, level='SELECT', msg='CKS_CNT ({0}ch): [{1}][{2} modo={3}]'.format(nro_counter_channels, cks_str,hex(cks), modo))
         return cks
 
-
     def PV_checksum_range(self, d):
         name = d.get(('RANGE','NAME'),'X')
         cks_str = '{}'.format(name)
@@ -395,7 +390,6 @@ class INIT_CONF_GLOBAL:
 
         log(module=__name__, function='PV_checksum_range', dlgid=self.dlgid, level='SELECT', msg='CKS_RANGE: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
-
 
     def PV_checksum_psensor(self, d):
         name = d.get(('PSENSOR', 'NAME'), 'X')
@@ -414,7 +408,6 @@ class INIT_CONF_GLOBAL:
 
         log(module=__name__, function='PV_checksum_psensor', dlgid=self.dlgid, level='SELECT', msg='CKS_PSENSOR: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
-
 
     def PV_checksum_aplicacion(self, d):
         '''
@@ -466,7 +459,6 @@ class INIT_CONF_GLOBAL:
         log(module=__name__, function='PV_checksum_aplicacion', dlgid=self.dlgid, level='SELECT', msg='CKS_APLICACION: [{0}][{1}]'.format(cks_str,hex(cks)))
         return cks
 
-
     def PV_checksum_modbus(self, d):
         # chechsum parametros modbus
         # MODBUS;MBWT:%03d;
@@ -492,28 +484,23 @@ class INIT_CONF_GLOBAL:
         log(module=__name__, function='PV_checksum_modbus', dlgid=self.dlgid, level='SELECT', msg='CKS_MB: [{0}][{1}]'.format( cks_str,hex(cks) ) )
         return cks
 
-
     def PV_checksum_str_app_off(self,d):
         cks_str = 'OFF'
         return(cks_str)
-
 
     def PV_checksum_str_app_tanque(self,d):
         cks_str = 'TANQUE'
         return(cks_str)
 
-
     def PV_checksum_str_app_perforacion(self,d):
         cks_str = 'PERFORACION'
         return(cks_str)
-
 
     def PV_checksum_str_app_consigna(self,d):
         cons_hhmm1 = int(d.get(('CONS', 'HHMM1'), '0000'))
         cons_hhmm2 = int(d.get(('CONS', 'HHMM2'), '0000'))
         cks_str = 'CONSIGNA,%04d,%04d' % ( cons_hhmm1, cons_hhmm2 )
         return(cks_str)
-
 
     def PV_checksum_str_app_plantapot(self,d):
         # header
@@ -567,11 +554,9 @@ class INIT_CONF_GLOBAL:
         # print(cks_str)
         return cks_str
 
-
     def PV_checksum_str_app_extpoll(self,d):
         cks_str = 'EXTPOLL'
         return(cks_str)
-
 
     def PV_checksum_str_app_piloto(self, d):
         # El piloto solo se utiliza en versiones nuevas
@@ -590,7 +575,6 @@ class INIT_CONF_GLOBAL:
                 cks_str += 'SLOT%d:%04d,%.02f;' % (slot, hhmm, pres)
         return cks_str
 
-
     def PV_checksum_str_app_modbus(self, d):
         # chechsum parametros modbus
         # SLA:addr;M0:NAM0,sl_addr0,length0,fc0;M1:NAM1,sl_addr1,length1,fc1;
@@ -607,7 +591,6 @@ class INIT_CONF_GLOBAL:
                 tipo = 'I'
             cks_str += '%s:%s,%04d,%02d,%02d,%c;' % (ch, name, addr, size, fcode, tipo)
         return cks_str
-
 
     def PV_checksum_str_app_genpulsos(self,d):
         pulsosXmt3 = int(d.get(('GENPULSOS', 'PULSOSXMT3'), '10'))

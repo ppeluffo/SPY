@@ -138,7 +138,7 @@ class BDGDA:
 
         if not self.connect(tag):
             log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{}: can\'t connect !!'.format(tag))
-            return
+            return None
 
         sql = """SELECT spx_unidades_configuracion.nombre as canal, spx_configuracion_parametros.parametro, 
                     spx_configuracion_parametros.value, spx_configuracion_parametros.configuracion_id as \"param_id\" FROM spx_unidades,
@@ -152,13 +152,13 @@ class BDGDA:
         except Exception as err_var:
             log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{0}: SQLQUERY: {1}'.format(tag, sql))
             log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid, msg='ERROR_{0}: EXCEPTION {1}'.format(tag, err_var))
-            return False
+            return None
 
         try:
             rp = self.conn.execute(query)
         except Exception as err_var:
             log(module=__name__, server=self.server, function='read_dlg_conf', dlgid=dlgid,msg='ERROR_{}: exec EXCEPTION {}'.format(tag, err_var))
-            return False
+            return None
 
         results = rp.fetchall()
         d = defaultdict(dict)
