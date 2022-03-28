@@ -4,16 +4,9 @@ from spy_log import *
 import os
 import sys
 from spy import Config
-from datetime import datetime
-from spy_utils import u_send_response, u_dataline_to_dict
-from spy_bd_redis import Redis
 from spy_bd_gda import BDGDA
-from spy_process import move_file_to_error_dir
 import daemon
 import shutil
-
-import time, atexit
-from signal import SIGTERM
 
 def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):   
     # Paso el proceso a demonio.
@@ -37,18 +30,6 @@ def insert_GDA(dlgid, data_line_list, tmp_file, dat_file, root_path):
         os._exit(0)
 
     return
-
-def insert_GDA_process_daemon_ori(obj, tmp_file, dat_file, root_path):
-    # Inicio un fork para dejar como demonio al proceso que ingresa los datos en la base.
-    pid = os.fork()
-    if pid == 0:
-        try: 
-            insert_GDA(obj.dlgid, obj.data_line_list, tmp_file, dat_file, root_path)
-        except Exception as err:
-            log(module=__name__, function='process', dlgid=obj.dlgid, msg=str(err))
-
-    return
-
 
 def insert_GDA_process_daemon(obj, tmp_file, dat_file, root_path):
     # Inicio un fork para dejar como demonio al proceso que ingresa los datos en la base.

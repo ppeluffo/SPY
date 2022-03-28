@@ -11,8 +11,8 @@ from spy_bd_gda import BDGDA
 #from spy_process import move_file_to_error_dir
 #from multiprocessing import Process
 import sys
-#from spy_raw_frame_data_daemon import insert_GDA_process_daemon
-#from spy_raw_frame_callbacks_daemon import callbacks_process_daemon
+from spy_raw_frame_data_daemon import insert_GDA_process_daemon
+from spy_raw_frame_callbacks_daemon import callbacks_process_daemon
 #import signal
 # ------------------------------------------------------------------------------
 class RAW_DATA_frame:
@@ -34,6 +34,8 @@ class RAW_DATA_frame:
         self.redis_db = None
         self.rcv_mbus_tag_id = None
         self.rcv_mbus_tag_val = None
+        self.tmp_file = None
+        self.dat_file = None
         log(module=__name__, function='__init__', dlgid=self.dlgid, msg='start')
         #log(module=__name__, function='__init__', dlgid=self.dlgid, msg='DEBUG PAYLOAD {0}'.format(self.payload_str))
         return
@@ -262,6 +264,19 @@ class RAW_DATA_frame:
 
         return
 
+    def insert_into_GDA(self):
+        log(module=__name__, function='process', dlgid=self.dlgid, msg='Start Daemon')
+        root_path = os.path.abspath('')  # Obtengo la carpeta actual para que el demonio no se pierda.
+        insert_GDA_process_daemon(self, self.tmp_file, self.dat_file, root_path)
+
+    def process_callbacks(self):
+        # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
+        log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
+        if self.bd.is_automatismo(self.dlgid) or self.redis_db.execute_callback():
+            log(module=__name__, function='process', dlgid=self.dlgid, msg='Start CallBacks Daemon')
+            callbacks_process_daemon(self)
+
+
     def process(self):
         # Realizo todos los pasos necesarios en el payload para generar la respuesta al datalooger e insertar
         # los datos en GDA
@@ -269,7 +284,7 @@ class RAW_DATA_frame:
 
         # Paso 1: Guardo los datos en un archivo temporal para que luego lo procese el 'process' en modo off-line
         self.process_payload()
-        ( tmp_file, dat_file ) = self.save_payload_in_file()
+        ( self.tmp_file, self.dat_file ) = self.save_payload_in_file()
 
         # Paso 2: Determino los datos de la ultima linea para mandar la respuesta
         self.split_code_and_data_lists()
@@ -282,9 +297,17 @@ class RAW_DATA_frame:
         # El central escribe en la redis de los remotos los datos de la variable a re-enviar.
         self.broadcast_local_vars()
 
-        # Paso 5: Preparo la respuesta y transmito
+        # Paso 5: Proceso los callbacks ( si estan definidos para este dlgid )
+        self.process_callbacks()
+
+        # Paso 6: Preparo la respuesta y transmito
         self.prepare_response()
         self.send_response()
         sys.stdout.flush()
+
+        # Paso 7: Inserto en GDA
+        self.insert_into_GDA()
+
         return
+
 
