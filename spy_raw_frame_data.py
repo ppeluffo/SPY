@@ -234,6 +234,13 @@ class RAW_DATA_frame:
         except:
             log(module=__name__, function='update_redis', dlgid=self.dlgid, msg='ERROR REDIS INSERT: len:{0}, line:{1}'.format(len(self.data_line_list), self.data_line_list))
 
+    def process_callbacks(self):
+        # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
+        log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
+        if self.bd.is_automatismo(self.dlgid) or self.redis_db.execute_callback():
+            log(module=__name__, function='process', dlgid=self.dlgid, msg='Start CallBacks Daemon')
+            callbacks_process_daemon(self)
+
     def prepare_response(self):
         # Mando el line_id de la ultima linea recibida
         # Agrego el clock para resincronizar
@@ -269,14 +276,6 @@ class RAW_DATA_frame:
         root_path = os.path.abspath('')  # Obtengo la carpeta actual para que el demonio no se pierda.
         insert_GDA_process_daemon(self, self.tmp_file, self.dat_file, root_path)
 
-    def process_callbacks(self):
-        # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
-        log(module=__name__, function='process', dlgid=self.dlgid, msg='CALL_BACKS')
-        if self.bd.is_automatismo(self.dlgid) or self.redis_db.execute_callback():
-            log(module=__name__, function='process', dlgid=self.dlgid, msg='Start CallBacks Daemon')
-            callbacks_process_daemon(self)
-
-
     def process(self):
         # Realizo todos los pasos necesarios en el payload para generar la respuesta al datalooger e insertar
         # los datos en GDA
@@ -292,13 +291,13 @@ class RAW_DATA_frame:
         # Paso 3: Actualizo la REDIS con la ultima linea
         self.update_redis()
 
-        # Paso 4:Transmision de una o mas varibles locales a equipos remotos. Este broadcast se hace de un equipo
+        # Paso 4: Proceso los callbacks ( si estan definidos para este dlgid )
+        self.process_callbacks()
+
+        # Paso 5:Transmision de una o mas varibles locales a equipos remotos. Este broadcast se hace de un equipo
         # central a remotos.
         # El central escribe en la redis de los remotos los datos de la variable a re-enviar.
         self.broadcast_local_vars()
-
-        # Paso 5: Proceso los callbacks ( si estan definidos para este dlgid )
-        self.process_callbacks()
 
         # Paso 6: Preparo la respuesta y transmito
         self.prepare_response()

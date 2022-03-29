@@ -1,5 +1,13 @@
 Listado de modificaciones al sistema SPY.
 
+----------------------------------------------------------------------
+Version 2.0.3 @ 2022-03-26:
+Hago correcciones al manejor de los frames modbus desde redis porque
+la version anterior no funcionaba con automatismos.
+Separo las respuestas modbus y el borrado de las ordenes de la redis
+de acuerdo a las versiones de frames.
+Queda en SPYTEST
+----------------------------------------------------------------------
 Version 2.0.3 @ 2022-03-26:
 - Al procesar los INITS, recien en el GLOBAL leo la BD de configuracion
 y la dejo en Redis. De este modo los sigientes tipos de inits no necestitan

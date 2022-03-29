@@ -26,6 +26,7 @@ class Redis():
         self.dlgid = dlgid
         self.connected = ''
         self.rh = ''
+        self.response = ''
         try:
             self.rh = redis.Redis(host=Config['REDIS']['host'], port=Config['REDIS']['port'], db=Config['REDIS']['db'])
             self.connected = True
@@ -91,55 +92,68 @@ class Redis():
         #
         return (response)
 
-    def get_cmd_modbus(self,fw_version=200, rcv_mbus_tag_id=None, rcv_mbus_tag_val=None ):
-        '''
-        Los lineas a enviar por modbus pueden estar en 2 variables de REDIS: MODBUS y BROADCAST.
-        En las versiones >= 400 se usan BROADCAST.
-        En las versiones anteriores usamos MODBUS.
-        '''
-        response = ''
-        if self.connected:
-            if fw_version < 400:
-                # MODBUS
-                # Devuelve un bytearray por lo que decode lo transforma en string
-                if self.rh.hexists(self.dlgid, 'MODBUS'):
-                    mbus_line = self.rh.hget(self.dlgid, 'MODBUS').decode()
-                    if mbus_line != 'NUL':
-                        log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='REDIS-MODBUS:{}'.format(mbus_line))
-                        response = 'MBUS=%s;' % mbus_line
-                self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
-            else:
-                # BROADCAST:
-                if self.rh.hexists(self.dlgid, 'BROADCAST'):
-                    mbus_line = self.rh.hget(self.dlgid, 'BROADCAST').decode()
-                    '''
-                    if self.dlgid == 'YCHTEST':
-                        mbus_line = '[2,1962,2,16,FLOAT,C1032,1.00]'
-                        mbus_line += '[2,2032,2,16,FLOAT,C1032,2.00]'
-                        mbus_line += '[2,2032,2,16,FLOAT,C1032,3.00]'
-                        mbus_line += '[2,2032,2,16,FLOAT,C1032,4.00]'
-                        mbus_line += '[2,2032,2,16,FLOAT,C1032,5.00]'
-                        mbus_line += '[2,2032,2,16,FLOAT,C1032,6.00]'
-                        mbus_line += '[2,2032,2,16,FLOAT,C1032,7.00]'
-                        #mbus_line += '[2,2032,2,16,FLOAT,C1032,8.00]'
-                    '''
-                    if mbus_line != 'NUL':
-                        log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='REDIS-MODBUS-BCAST:{}'.format(mbus_line))
-                        response = 'MBUS=%s;' % mbus_line
+    # -------------------------------------------------------------------------------------------------
+    def get_cmd_modbus_v200(self):
+        # MODBUS
+        # En las versiones anteriores usamos el tag MODBUS de redis.
+        # Devuelve un bytearray por lo que decode lo transforma en string
+        if self.rh.hexists(self.dlgid, 'MODBUS'):
+            mbus_line = self.rh.hget(self.dlgid, 'MODBUS').decode()
+            if mbus_line != 'NUL':
+                log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid,
+                    msg='REDIS-MODBUS:{}'.format(mbus_line))
+                self.response = 'MBUS=%s;' % mbus_line
+        self.rh.hset(self.dlgid, 'MODBUS', 'NUL')
+        return
 
-                # Version 20220307: Borro cuando llega un ACK
-                # Version 20220204: Ajuste para reintentar el comando si el datalogger indico que no pudo procesarlo
-                '''
-                if rcv_nack == 'ACK':
+    def get_cmd_modbus_v400(self):
+        # BROADCAST:
+        # En las versiones >= 400 hasta 404 usamos el tag BROADCAST.
+        if self.rh.hexists(self.dlgid, 'BROADCAST'):
+            mbus_line = self.rh.hget(self.dlgid, 'BROADCAST').decode()
+            if mbus_line != 'NUL':
+                log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid,
+                    msg='REDIS-MODBUS-BCAST:{}'.format(mbus_line))
+                self.response = 'MBUS=%s;' % mbus_line
+            self.rh.hset(self.dlgid, 'BROADCAST', 'NUL')
+        return
+
+    def get_cmd_modbus_v404(self, rcv_mbus_tag_id=None, rcv_mbus_tag_val=None):
+        '''
+        En los nuevos frames a partir de Version 4.0.4, el datalogger nos manda un id ( ACK o NACK )
+        y un valor que indica el MBTAG.
+        '''
+        if self.rh.hexists(self.dlgid, 'BROADCAST'):
+            mbus_line = self.rh.hget(self.dlgid, 'BROADCAST').decode()
+            if mbus_line != 'NUL':
+                log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid,
+                    msg='REDIS-MODBUS-BCAST:{}'.format(mbus_line))
+                self.response = 'MBUS=%s;' % mbus_line
+
+                # Version 20220307: Borro cuando llega un ACK.
+                if rcv_mbus_tag_id == 'ACK':
                     self.rh.hset(self.dlgid, 'BROADCAST', 'NUL')
-                elif rcv_nack == 'NACK':
+                elif rcv_mbus_tag_id == 'NACK':
                     log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='ERROR: NACK rcvd. No borro comando.')
-                '''
+
+        return
+
+    def get_cmd_modbus(self,fw_version=200, rcv_mbus_tag_id=None, rcv_mbus_tag_val=None ):
+        # Depende de las versiones.
+        if self.connected:
+            if fw_version >= 404:
+                self.get_cmd_modbus_v404(rcv_mbus_tag_id, rcv_mbus_tag_val)
+            elif fw_version > 400:
+                self.get_cmd_modbus_v400()
+            else:
+                self.get_cmd_modbus_v200()
 
         else:
             log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
-        #
-        return (response)
+
+        return self.response
+
+    # -------------------------------------------------------------------------------------------------
 
     def get_cmd_pilotos(self,fw_version=200):
         # PILOTO
