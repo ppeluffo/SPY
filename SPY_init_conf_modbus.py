@@ -5,10 +5,11 @@ Created on Wed Aug  7 20:51:49 2019
 
 @author: pablo
 """
+import ast
 
 from spy_log import log
 from spy_utils import u_send_response,  u_get_fw_version, u_convert_fw_version_to_str
-
+from ast import literal_eval
 # ------------------------------------------------------------------------------
 
 class INIT_CONF_MODBUS:
@@ -16,6 +17,7 @@ class INIT_CONF_MODBUS:
     def __init__(self, dlgid, version, dconf ):
         self.dlgid = dlgid
         self.version = version
+        self.fw_version = u_convert_fw_version_to_str(self.version)
         self.dconf = dconf
         self.response = ''
         self.sla = dconf.get(('BASE', 'MBUS_SLAVE_ADDR'), '0')
@@ -28,7 +30,7 @@ class INIT_CONF_MODBUS:
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
         pload = 'CLASS:APP_B;{}'.format(self.response )
-        u_send_response('INIT', pload)
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 
@@ -67,8 +69,8 @@ class INIT_CONF_MBUS_LOW:
         El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
-        pload = 'CLASS:MBUS_LOW;{}'.format(self.response )
-        u_send_response('INIT', pload)
+        pload = 'CLASS:MBUS_LOW;{0};'.format(self.response )
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 
@@ -108,8 +110,8 @@ class INIT_CONF_MBUS_MED:
         El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
-        pload = 'CLASS:MBUS_MED{}'.format(self.response )
-        u_send_response('INIT', pload)
+        pload = 'CLASS:MBUS_MED{0};'.format(self.response )
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 
@@ -147,8 +149,8 @@ class INIT_CONF_MBUS_HIGH:
         El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
-        pload = 'CLASS:MBUS_HIGH{}'.format(self.response )
-        u_send_response('INIT', pload)
+        pload = 'CLASS:MBUS_HIGH{0};'.format(self.response )
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 
@@ -168,3 +170,65 @@ class INIT_CONF_MBUS_HIGH:
             ch, name, sla_addr, reg_addr, nro_recs, fcode, tipo, codec, pow10)
         return
 
+
+class INIT_CONF_MBUS:
+
+    def __init__(self, dlgid, version, d_dlgbdconf, d_payload ):
+        self.dlgid = dlgid
+        self.version = version
+        self.d_dlgbdconf = d_dlgbdconf
+        self.d_payload = d_payload
+        self.fw_version = u_convert_fw_version_to_str(self.version)
+        self.response = ''
+        #
+        self.config_modbus()
+        return
+
+    def process(self):
+        '''
+        El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
+        '''
+        log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confModbus_RSP: ({})'.format(self.response))
+        pload = 'CLASS:MBUS{0};'.format(self.response )
+        u_send_response(self.fw_version, 'INIT', pload)
+        log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
+        return
+
+    def config_modbus(self):
+        self.response = ''
+        '''
+        Extraigo del payload_str los canales a configurar
+        '''
+        log(module=__name__, function='config_modbus', level='SELECT', dlgid=self.dlgid,
+            msg='PAYLOAD:({0})'.format(self.d_payload.get('DATA','Err')))
+
+        try:
+            l_channels = ast.literal_eval( self.d_payload.get('DATA','Err') )
+        except:
+            log(module=__name__, function='config_modbus', level='SELECT', dlgid=self.dlgid,
+                msg='PAYLOAD ERROR (Not List):({0})'.format(self.d_payload.get('DATA', 'Err')))
+            return
+
+        if not isinstance(l_channels, list):
+            log(module=__name__, function='config_modbus', level='SELECT', dlgid=self.dlgid,
+                msg='PAYLOAD ERROR (Not List):({0})'.format(self.d_payload.get('DATA', 'Err')))
+            return
+
+        for ch in l_channels:
+            # En el primer frame agrego el MBWT.
+            if ch == 0:
+                mbwt = int(self.d_dlgbdconf.get(('BASE', 'MBUS_WAITTIME'), '1'))
+                self.response = ';MBWT:{0}'.format(mbwt)
+
+            mbname = 'M{}'.format(ch)
+            name = self.d_dlgbdconf.get((mbname, 'NAME'), 'X')
+            sla_addr = int(self.d_dlgbdconf.get((mbname, 'SLA_ADDR'), '0'))
+            reg_addr = int(self.d_dlgbdconf.get((mbname, 'REG_ADDR'), '0'))
+            nro_recs = int(self.d_dlgbdconf.get((mbname, 'NRO_RECS'), '1'))
+            fcode = int(self.d_dlgbdconf.get((mbname, 'FCODE'), '3'))
+            tipo = self.d_dlgbdconf.get((mbname, 'TYPE'), 'U16').upper()
+            codec = self.d_dlgbdconf.get((mbname, 'CODEC'), 'C3210').upper()
+            pow10 = int(self.d_dlgbdconf.get((mbname, 'POW10'), '0'))
+            self.response += ';MB%02d:%s,%d,%d,%d,%d,%s,%s,%d' % (
+            ch, name, sla_addr, reg_addr, nro_recs, fcode, tipo, codec, pow10)
+        return

@@ -41,7 +41,7 @@ class INIT_CONF_COUNTER:
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confCounter_RSP: ({})'.format(self.response))
         pload = 'CLASS:COUNTER;{}'.format(self.response )
-        u_send_response('INIT', pload)
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 

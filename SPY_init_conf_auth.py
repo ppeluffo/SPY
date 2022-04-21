@@ -16,7 +16,7 @@ from spy_log import log
 from spy_utils import u_send_response
 from spy_bd_bdspy import BDSPY
 from spy import Config
-
+from spy_utils import u_send_response, u_convert_fw_version_to_str
 # ------------------------------------------------------------------------------
 
 class INIT_CONF_AUTH:
@@ -33,6 +33,7 @@ class INIT_CONF_AUTH:
         '''
         self.dlgid = dlgid
         self.version = version
+        self.fw_version = u_convert_fw_version_to_str(version)
         self.uid = uid
         return
 
@@ -54,14 +55,14 @@ class INIT_CONF_AUTH:
             En este ultimo, arregla en la BD el UID. 
             '''
             bd.update_uid(self.dlgid, self.uid)
-            pload = 'CLASS:AUTH;STATUS:OK'
-            u_send_response('INIT', pload)
+            pload = 'CLASS:AUTH;STATUS:OK;'
+            u_send_response(self.fw_version, 'INIT', pload)
             log(module=__name__, function='CONF_AUTH_send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
 
         elif bd.uid_is_defined(self.uid):
             dlgid_from_bd = bd.get_dlgid_from_uid(self.uid)
-            pload = 'CLASS:AUTH;STATUS:RECONF;DLGID:{}'.format(dlgid_from_bd)
-            u_send_response('INIT', pload)
+            pload = 'CLASS:AUTH;STATUS:RECONF;DLGID:{};'.format(dlgid_from_bd)
+            u_send_response(self.fw_version, 'INIT', pload)
             log(module=__name__, function='CONF_AUTH_send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
 
         else:
@@ -69,8 +70,8 @@ class INIT_CONF_AUTH:
             No encontramos el DLGID ni un UID que permita recuperarnos.
             ERROR
             '''
-            pload = 'CLASS:AUTH;STATUS:ERROR_DS'
-            u_send_response('INIT', pload)
+            pload = 'CLASS:AUTH;STATUS:ERROR_DS;'
+            u_send_response(self.fw_version, 'INIT', pload)
             log(module=__name__, function='CONF_AUTH_send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
 
         return

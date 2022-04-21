@@ -42,7 +42,7 @@ class RAW_DATA_frame:
 
     def send_response(self):
         pload = '{}'.format(self.response_pload)
-        u_send_response('DATA', pload)
+        u_send_response(self.fw_version, 'DATA', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 
@@ -185,7 +185,7 @@ class RAW_DATA_frame:
             log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='{0}: redis_bcast_line: {1}'.format(dlg_rem, redis_brodcast_line))
         #
         # MODBUS
-        self.redis_db.insert_bcast_line_old(list_old_format)
+        self.redis_db.insert_bcast_line_old(list_old_format, self.rcv_mbus_tag_id, self.rcv_mbus_tag_val )
         #
         log(module=__name__, function='broadcast_local_vars', dlgid=self.dlgid, level='SELECT', msg='End')
         return
@@ -210,7 +210,7 @@ class RAW_DATA_frame:
                 # Puede haber una version que solo mande ACK o NACK sin el tag_val
                 self.rcv_mbus_tag_id = tags[0]  # tag_id
                 if len(tags) > 1:
-                    self.rcv_mbus_tag_val = tags[1]
+                    self.rcv_mbus_tag_val = tags[1].split(';')[0]
                 else:
                     self.rcv_mbus_tag_val = -1
                 # Elimino la linea taggeada
@@ -282,6 +282,7 @@ class RAW_DATA_frame:
         log(module=__name__, function='process', dlgid=self.dlgid, msg='START')
 
         # Paso 1: Guardo los datos en un archivo temporal para que luego lo procese el 'process' en modo off-line
+        # Aqui tambien extraigo los tags del modbus.
         self.process_payload()
         ( self.tmp_file, self.dat_file ) = self.save_payload_in_file()
 
@@ -305,6 +306,8 @@ class RAW_DATA_frame:
         sys.stdout.flush()
 
         # Paso 7: Inserto en GDA
+        # DEBUG: En testing en mi laptop no lo habilito. SI HACERLO EN PRODUCCION !!!!
+        # --->>>>> 
         self.insert_into_GDA()
 
         return

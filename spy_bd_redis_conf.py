@@ -32,11 +32,16 @@ class RedisBdConf:
         self.connected = ''
         self.rhandle = ''
         try:
-            self.rhandle = redis.Redis(host=Config['REDIS']['host'], port=Config['REDIS']['port'], db=Config['REDIS']['db_conf'])
-            self.connected = True
+            self.rhandle = redis.Redis(host=Config['REDIS']['host'], port=Config['REDIS']['port'], db=Config['REDIS']['db_conf'], socket_connect_timeout=2 )
         except Exception as err_var:
             log(module=__name__, function='__init__', dlgid=self.dlgid, msg='RedisBdConf init ERROR !!')
             log(module=__name__, function='__init__', dlgid=self.dlgid, msg='EXCEPTION {}'.format(err_var))
+
+        # Para confirmar si redis esta conectado debo hacer un ping()
+        self.connected = True
+        try:
+            self.rhandle.ping()
+        except:
             self.connected = False
 
     def save_conf_to_redis(self, dlg_conf ):
@@ -53,5 +58,8 @@ class RedisBdConf:
         Recupera la clave dlgid, des-serializa y obtiene el diccionario con la configuracion
         '''
         pdict = self.rhandle.get(self.dlgid)
-        dconf = pickle.loads(pdict)
+        if pdict is not None:
+            dconf = pickle.loads(pdict)
+        else:
+            dconf = None
         return dconf

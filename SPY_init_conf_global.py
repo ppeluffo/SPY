@@ -55,8 +55,8 @@ class INIT_CONF_GLOBAL:
 
 
     def send_response(self):
-        pload = 'CLASS:GLOBAL;{}'.format(self.response_pload)
-        u_send_response('INIT', pload)
+        pload = 'CLASS:GLOBAL;{};'.format(self.response_pload)
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 

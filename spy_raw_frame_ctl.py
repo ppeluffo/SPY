@@ -38,7 +38,8 @@ class RAW_CTL_frame:
     # DLGID=TEST01&TYPE=CTL&VER=2.0.6&PLOAD=CLASS:SCAN;UID:304632333433180f000500
     # En el init le pase el raw_frame que es la instancia superior de modo que esta clase pueda
     # acceder a los datos del payload
-    def __init__(self,dlgid,version, payload):
+    def __init__(self,dlgid, version, payload):
+        # payload = "CLASS:AUTH;UID:3759303135321102000600"
         self.dlgid = dlgid
         self.version = version
         self.payload_str = payload
@@ -48,11 +49,10 @@ class RAW_CTL_frame:
     def process(self):
         # Decodifico el payload y veo a que clase pertenece. A partir de la clase es que
         # puedo invocar a una clase mas especializada.
-
+        # payload = "CLASS:AUTH;UID:3759303135321102000600"
         log(module=__name__, function='process', dlgid=self.dlgid, msg='start')
-
-        payload_dict = u_parse_payload(self.payload_str)
-        payload_class = payload_dict.get('CLASS','ERROR')
+        d_payload = u_parse_payload(self.payload_str)
+        payload_class = d_payload.get('CLASS','ERROR')
 
         if payload_class == 'SCAN':
             '''
@@ -61,7 +61,7 @@ class RAW_CTL_frame:
             de las clases superiores.
             '''
             from SPY_ctl_scan import RAW_CTL_SCAN_frame
-            raw_ctl_scan_frame = RAW_CTL_SCAN_frame(self.dlgid,self.version,payload_dict )
+            raw_ctl_scan_frame = RAW_CTL_SCAN_frame(self.dlgid,self.version, self.payload_dict )
             raw_ctl_scan_frame.process()
 
         return

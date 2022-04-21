@@ -39,11 +39,31 @@ def u_parse_string( string_to_parse, field_separator=';', key_separator=':'):
 
 
 def u_parse_cgi_line( cgi_rxline ):
-    return u_parse_string( cgi_rxline, field_separator='&', key_separator='=')
+    #return u_parse_string( cgi_rxline, field_separator='&', key_separator='=')
+    d = {k:v for (k, v) in [x.split('=') for x in cgi_rxline.split('&') if '=' in x]}
+    '''
+    l_fields = cgi_rxline.split('&')    # Lista con todos los pares key=value
+    d = {}
+    l_fields = [ x for x in l_fields if '=' in x]
+    for i in l_fields:
+        (k,v) = i.split('=')
+        d[k]=v
+    '''
+    return d
 
 
 def u_parse_payload( payload ):
-    return u_parse_string( payload, field_separator=';', key_separator=':')
+    # return u_parse_string( payload, field_separator=';', key_separator=':')
+    d = {k:v for (k, v) in [x.split(':') for x in payload.split(';') if ':' in x]}
+    '''
+    l_fields = payload.split(';')    # Lista con todos los pares key=value
+    d = {}
+    l_fields = [x for x in l_fields if ':' in x]
+    for i in l_fields:
+        (k,v) = i.split(':')
+        d[k]=v
+    '''
+    return d
 
 
 def u_print_form(form):
@@ -60,9 +80,15 @@ def u_print_payload(pload):
         print('\t{0}={1}'.format(key,pload[key]))
 
 
-def u_send_response(type='', pload=''):
-    #LOG.info('[%s] RSP=[%s]' % (self, self.response))
+def u_send_response( fw_version=200, type='', pload=''):
     response = 'TYPE={0}&PLOAD={1}'.format(type,pload)
+    # Agregamos el checksum a cada frame enviado.
+    # En versiones anteriores a 4.0.4 no agrego el checksum
+    if fw_version >= 404:
+        cks = u_calcular_ckechsum(response)
+        response += "CKS:{0};".format(cks)
+    log(module=__name__, function='u_send_response', dlgid='ERROR', msg='Version={0}, rsp=[{1}]'.format(fw_version, response))
+
     try:
         print('Content-type: text/html\n')
         print('<html><body><h1>{0}</h1></body></html>'.format(response))
@@ -131,317 +157,692 @@ def u_convert_fw_version_to_str( str_version ):
     return version
 
 
-
-def mbusWrite(dlgid,register,dataType,value):
+def mbusWrite(dlgid='', register='', dataType='', value='', fdbk='', mbTag=''):
     '''
-        dlgid       => datalogger por el cual se quiere mandar el valor del registro modbus
-        register    => valor del registro modbus que se quiere escribir
-        dataType    => tipo de dato que se quiere escribir [ interger | float ]
-        value       => valor que se quiere poner en este registro
+        FLOWCHART -> https://drive.google.com/file/d/191gir1No6tSEBDgU3e76ekZJqHQl5jET/view?usp=sharing
 
-        EX: mbusWrite(self.DLGID_CTRL,'2097','interger',105)
+        v 1.2.3 21/04/2021
+
+        funcion que implementa una cola en donde existe en buffer de transmisión que se puede llenar hasta cubrir el ancho de cirta ventana.
+        el resto de los bytes que quedan por fuera de la ventana se insertan en una cola FIFO si no existen en la misma. En caso de que existan tanto en 
+        el buffer de tx como en la cola serán actualizados.
+        EX:
+            mbusWrite(self.DLGID_CTRL,'2097','interger',105)
     '''
     # Dependencias
     import redis
     from spy_config import Config
     from spy_log import log
 
+    # Definición de ventanas de buffers de transmisión
+    windowsFirmNuevo = 7
+    windowsFirmViejo = 3
+
     # parametros usados en el firmware nuevo
     MbusSlave = 2
-    NumberOfReg2Read = '2'
-    dataTypeNew ='FLOAT'
-    if dataType == 'interger': dataTypeNew ='I16' 
-    if dataType == 'interger': NumberOfReg2Read = '1'
+    NumberOfReg2Read = 1 if dataType == 'interger' else 2
+    dataTypeNew = 'I16' if dataType == 'interger' else 'FLOAT'
     dataCodec = 'C1032'
+    MBTAG = 'MBTAG'
 
-    
+    # parametros usados en el firmware viejo
+    dataType = 'I' if dataType == 'interger' else 'F'
+
+    # funciones auxiliares
     def lst2str(list):
         '''
             Convierto de lista a string
               EX:
-                list = ['print_log', True, 'DLGID_CTRL', 'MER001']
-                string = lst2str(list)
-                string = print_log,True,DLGID_CTRL,MER001
+                string = lst2str(['print_log', True, 'DLGID_CTRL', 'MER001'])
+                >> string = print_log,True,DLGID_CTRL,MER001
         '''
         my_str = str(list[0])
         n = 0
         for param in list:
-            if n < (len(list)-1): 
+            if n < (len(list)-1):
                 n += 1
-                my_str = "{my_str},{list}".format(my_str=my_str, list=str(list[n]))
+                my_str = "{my_str},{list}".format(
+                    my_str=my_str, list=str(list[n]))
         return my_str
-    
-    # para el firmware viejo
-    def getLastModbusData():
-        '''
-            retorno listas con los registros, el tipo de datos y el valor
-        '''
-        lastMODBUS = rh.hget(dlgid,'lastMODBUS').decode()
-        lastMODBUS = lst2str(lastMODBUS.split("["))
-        lastMODBUS = lst2str(lastMODBUS.split("]"))
-        lstlastMODBUS = lastMODBUS.split(",")
-                              
-        # limpio la lista lstlastMODBUS de elementos vacios
-        for element in lstlastMODBUS:
-            if element == '': lstlastMODBUS.remove('')             
 
-        # extraigo la informacion de los registros, el dataType y los valores
-        n = 0
-        lstRegisters = []
-        lstDataTypes = []
-        lstValues = []
-        for element in lstlastMODBUS:
-            lstRegisters.append(lstlastMODBUS[n])
-            lstDataTypes.append(lstlastMODBUS[n+1])
-            lstValues.append(lstlastMODBUS[n+2])
-            n += 3
-            if n >= len(lstlastMODBUS): break
-        return lstRegisters,lstDataTypes,lstValues
-    def insertOrUpdateRegister(register,dataType,value):
+    def getRegistersInfo(redisKey):
         '''
-            actualizo el valor del registro si se encuentra en cola de envio (lastMODBUS)
-            En caso de que no se encuentre lo inserto
-        ''' 
-        if register in lstRegisters:
-            # actualizo los nuevos valores que se quieren poner
-            lstDataTypes[lstRegisters.index(register)] = dataType
-            lstValues[lstRegisters.index(register)] = value
-        else:
-            # anado los valores nuevos que se quieren poner
-            lstRegisters.append(register)
-            lstDataTypes.append(dataType)
-            lstValues.append(value)
-
-        # Armo el frame a escribir en los registros del datalogger para el firmware viejo
-        n = 0
-        currentModbusOld = ''
-        for element in lstRegisters:
-            if n == 0: currentModbusOld = "[{lstRegisters},{lstDataTypes},{lstValues}]".format(lstRegisters=lstRegisters[n], lstDataTypes=lstDataTypes[n], lstValues=lstValues[n])
-            else: currentModbusOld = "{currentModbusOld}[{lstRegisters},{lstDataTypes},{lstValues}]".format(currentModbusOld=currentModbusOld,lstRegisters=lstRegisters[n],lstDataTypes=lstDataTypes[n],lstValues=lstValues[n])
-            n += 1
-
-        # mando la orden de actualizar la cola 
-        rh.hset(dlgid,'lastMODBUS',currentModbusOld)            # para los firmwares viejos
-    def sendRegToDLG(lstRegisters,lstDataTypes,lstValues,FifioWindows):
+            Obtiene la info de los registros del string almacenado en redisKey y la devuelve en un dict.
         '''
-            Saca de la cola la cantidad de registros que indica la ventana y los envia al PLC
-        '''
-        
-        lstRegToSendOldFormat = ''  # string que se va a colocar en redis para transmitir datos modbus en el firmware viejo
-        currentFIFOqueue = ''       # string que iindica como queda la cola luego haber transmitido datos
-        
-        # Si la cola es menor o igual que la ventana entonces en esta corrida se logran enviar todos los registros
-        if len(lstRegisters) <= FifioWindows:   rh.hdel(dlgid,'lastMODBUS')     
+        try:
+            RegistersInfo = rh.hget(dlgid, redisKey).decode()
+            RegistersInfo = lst2str(RegistersInfo.split("["))
+            RegistersInfo = lst2str(RegistersInfo.split("]"))
+            lstRegistersInfo = RegistersInfo.split(",")
 
-        # armo el strig a transmitir para datalogger con firware viejo
-        n = 0
-        for register in lstRegisters:
-            if n == 0: lstRegToSendOldFormat = "[{register},{lstDataTypes},{lstValues}]".format(register=register,lstDataTypes=lstDataTypes[n],lstValues=lstValues[n])
-            else: lstRegToSendOldFormat = "{lstRegToSendOldFormat}[{register},{lstDataTypes},{lstValues}]".format(lstRegToSendOldFormat=lstRegToSendOldFormat, register=register,lstDataTypes=lstDataTypes[n],lstValues=lstValues[n])
-            n += 1
-            if n == FifioWindows: break        
+            # limpio la lista lstLastBROADCAST de elementos vacios
+            for element in lstRegistersInfo:
+                if element == '':
+                    lstRegistersInfo.remove('')
 
-        # elimino los datos transmitidos
-        n = 0
-        while True:
-            try:
-                # elimino los datos transmitidos
-                lstRegisters.pop(0)
-                lstDataTypes.pop(0)
-                lstValues.pop(0)
-                n += 1
-                if n == FifioWindows: break
-            except:
-                break
-        
-        # Armo como quedaria la cola despues del ultimo envio
-        n = 0
-        for register in lstRegisters:
-            if n == 0: currentFIFOqueue = "[{register},{lstDataTypes},{lstValues}]".format(register=register,lstDataTypes=lstDataTypes[n],lstValues=lstValues[n])
-            else: currentFIFOqueue = "{currentFIFOqueue}[{register},{lstDataTypes},{lstValues}]".format(currentFIFOqueue=currentFIFOqueue, register=register, lstDataTypes=lstDataTypes[n], lstValues=lstValues[n])
-            n += 1  
-  
-        # mando al datalogger los registros
-        rh.hset(dlgid,'MODBUS',lstRegToSendOldFormat)
-        
-        # mando la orden de actualizar la cola para los firmwares viejos
-        if currentFIFOqueue:    rh.hset(dlgid,'lastMODBUS',currentFIFOqueue)     
-
-    # para el firmware nuevo
-    def getLastBroadcastData():
-        '''
-            retorno listas todos los datos
-        '''
-        lastBROADCAST = rh.hget(dlgid,'lastBROADCAST').decode()
-        lastBROADCAST = lst2str(lastBROADCAST.split("["))
-        lastBROADCAST = lst2str(lastBROADCAST.split("]"))
-        lstLastBROADCAST = lastBROADCAST.split(",")
-                        
-        # limpio la lista lstLastBROADCAST de elementos vacios
-        for element in lstLastBROADCAST:
-            if element == '': lstLastBROADCAST.remove('')             
-         
-        # extraigo la informacion de los registros, el dataType y los valores
-        n = 0
-        lstMbusSlave = []
-        lstRegisters = []
-        lstNumberOfReg2Read = []
-        lstDataType = []
-        lstdataCodec = []
-        lstValues = []
-        for element in lstLastBROADCAST:
-            lstMbusSlave.append(lstLastBROADCAST[n])
-            lstRegisters.append(lstLastBROADCAST[n+1])
-            lstNumberOfReg2Read.append(lstLastBROADCAST[n+2])
-            lstDataType.append(lstLastBROADCAST[n+4])
-            lstdataCodec.append(lstLastBROADCAST[n+5])
-            lstValues.append(lstLastBROADCAST[n+6])
-            n += 7
-            if n >= len(lstLastBROADCAST): break
-        return lstMbusSlave,lstRegisters,lstNumberOfReg2Read,lstDataType,lstdataCodec,lstValues
-    def insertOrUpdateRegister2(lstMbusSlave,lstRegisters,lstNumberOfReg2Read,lstDataType,lstdataCodec,lstValues):
-        '''
-            actualizo el valor del registro si se encuentra en cola de envio (lastMODBUS)
-            En caso de que no se encuentre lo inserto
-        '''
-        if register in lstRegisters:
-            # actualizo los nuevos valores que se quieren poner
-            lstMbusSlave[lstRegisters.index(register)] = MbusSlave
-            lstNumberOfReg2Read[lstRegisters.index(register)] = NumberOfReg2Read
-            lstDataType[lstRegisters.index(register)] = dataTypeNew
-            lstdataCodec[lstRegisters.index(register)] = dataCodec
-            lstValues[lstRegisters.index(register)] = value
-        else:
-            # anado los valores nuevos que se quieren poner
-            lstMbusSlave.append(MbusSlave)
-            lstRegisters.append(register)
-            lstNumberOfReg2Read.append(NumberOfReg2Read)
-            lstDataType.append(dataTypeNew)
-            lstdataCodec.append(dataCodec)
-            lstValues.append(value)
-        
-        # Armo el frame a escribir en los registros del datalogger para el firmware nuevo
-        n = 0
-        currentModbusNew = ''
-        for registers in lstRegisters:
-            if n == 0: 
-                currentModbusNew = "[{lstMbusSlave},{registers},{lstNumberOfReg2Read},16,{lstDataType},{lstdataCodec},{lstValues}]".format(lstMbusSlave=lstMbusSlave[n],registers=registers,lstNumberOfReg2Read=lstNumberOfReg2Read[n],lstDataType=lstDataType[n],lstdataCodec=lstdataCodec[n],lstValues=lstValues[n])
-            else: 
-                currentModbusNew = "{currentModbusNew}[{lstMbusSlave},{registers},{lstNumberOfReg2Read},16,{lstDataType},{lstdataCodec},{lstValues}]".format(currentModbusNew=currentModbusNew,lstMbusSlave=lstMbusSlave[n],registers=registers,lstNumberOfReg2Read=lstNumberOfReg2Read[n],lstDataType=lstDataType[n],lstdataCodec=lstdataCodec[n],lstValues=lstValues[n])
-            n += 1
-
-        # mando la orden de actualizar la cola 
-        rh.hset(dlgid,'lastBROADCAST',currentModbusNew)            # para los firmwares viejos         
-    def sendRegToDLG2(lstMbusSlave,lstRegisters,lstNumberOfReg2Read,lstDataType,lstdataCodec,lstValues,FifioWindows):
-        '''
-            Saca de la cola la cantidad de registros que indica la ventana y los envia al PLC
-        '''
-        
-        lstRegToSendNewFormat = ''  # string que se va a colocar en redis para transmitir datos modbus en el firmware nuevo
-        currentFIFOqueue = ''       # string que iindica como queda la cola luego haber transmitido datos
-        
-        # Si la cola es menor o igual que la ventana entonces en esta corrida se logran enviar todos los registros
-        if len(lstRegisters) <= FifioWindows:   rh.hdel(dlgid,'lastBROADCAST')     
-        
-        # armo el strig a transmitir para datalogger con firware nuevo
-        n = 0
-        for register in lstRegisters:
-            if n == 0: 
-                lstRegToSendNewFormat = "[{lstMbusSlave},{register},{lstNumberOfReg2Read},16,{lstDataType},{lstdataCodec},{lstValues}]".format(lstMbusSlave=lstMbusSlave[n],register=register,lstNumberOfReg2Read=lstNumberOfReg2Read[n],lstDataType=lstDataType[n],lstdataCodec=lstdataCodec[n],lstValues=lstValues[n])
-            else: 
-                lstRegToSendNewFormat = "{lstRegToSendNewFormat}[{lstMbusSlave},{register},{lstNumberOfReg2Read},16,{lstDataType},{lstdataCodec},{lstValues}]".format(lstRegToSendNewFormat=lstRegToSendNewFormat, lstMbusSlave=lstMbusSlave[n],register=register,lstNumberOfReg2Read=lstNumberOfReg2Read[n],lstDataType=lstDataType[n],lstdataCodec=lstdataCodec[n],lstValues=lstValues[n])
-            n += 1
-            if n == FifioWindows: break         
-
-        n = 0
-        while True:
-            try:
-                # elimino los datos transmitidos
-                lstMbusSlave.pop(0)
-                lstRegisters.pop(0)
-                lstNumberOfReg2Read.pop(0)
-                lstDataType.pop(0)
-                lstdataCodec.pop(0)
-                lstValues.pop(0)
-                n += 1
-                if n == FifioWindows: break
-            except:
-                break
-
-        # Armo como quedaria la cola despues del ultimo envio
-        n = 0
-        for register in lstRegisters:
-            if n == 0: \
-                currentFIFOqueue = "[{lstMbusSlave},{register},{lstNumberOfReg2Read},16,{lstDataType},{lstdataCodec},{lstValues}]".format(lstMbusSlave=lstMbusSlave[n],register=register,lstNumberOfReg2Read=lstNumberOfReg2Read[n],lstDataType=lstDataType[n],lstdataCodec=lstdataCodec[n],lstValues=lstValues[n])
-            else: 
-                currentFIFOqueue = "{currentFIFOqueue}[{lstMbusSlave},{register},{lstNumberOfReg2Read},16,{lstDataType},{lstdataCodec},{lstValues}]".format(currentFIFOqueue=currentFIFOqueue, lstMbusSlave=lstMbusSlave[n],register=register,lstNumberOfReg2Read=lstNumberOfReg2Read[n],lstDataType=lstDataType[n],lstdataCodec=lstdataCodec[n],lstValues=lstValues[n])
-            n += 1 
-  
-        # mando al datalogger los registros
-        rh.hset(dlgid,'BROADCAST',lstRegToSendNewFormat)
-        
-        # mando la orden de actualizar la cola para los firmwares viejos
-        if currentFIFOqueue:    rh.hset(dlgid,'lastBROADCAST',currentFIFOqueue)     
-
-    # Establezco conexión con bd redis
-    
-    connected = ''
-    rh = ''
-    try:
-        rh = redis.Redis(host=Config['REDIS']['host'], port=Config['REDIS']['port'], db=Config['REDIS']['db'])
-        connected = True
-    except Exception as err_var:
-        log(module=__name__, function='__init__', dlgid=dlgid, msg='Redis init ERROR !!')
-        log(module=__name__, function='__init__', dlgid=dlgid, msg='EXCEPTION {}'.format(err_var))
-        connected = False
-
-    # Solo ejecuto la logica si tengo conexion a la base de datos
-    if connected:
-        if   dataType == 'interger':    dataType ='I'
-        elif dataType == 'float':       dataType ='F'
-        
-        #
-        ## FIRMWARE VIEJO --------------------------
-        if register:
-            # llamado con registros nuevos para escribir
-            if not rh.hexists(dlgid,'lastMODBUS'):
-                #rh.hset(dlgid,'MODBUS','[{0},{1},{2}]'.format(register,dataType,value))
-                rh.hset(dlgid,'lastMODBUS','[{0},{1},{2}]'.format(register,dataType,value))
+            if redisKey == 'MODBUS' or redisKey == 'lastMODBUS':
+                # extraigo la informacion que contiene el formato del firmware viejo
+                n = 0
+                lstRegisters = []
+                lstDataType = []
+                lstValues = []
+                for element in lstRegistersInfo:
+                    lstRegisters.append(lstRegistersInfo[n])
+                    lstDataType.append(lstRegistersInfo[n+1])
+                    lstValues.append(lstRegistersInfo[n+2])
+                    n += 3
+                    if n >= len(lstRegistersInfo):
+                        break
+                return dict(lstRegisters=lstRegisters, lstDataType=lstDataType, lstValues=lstValues)
             else:
-                # leo todos los registros, datos y valores que estan en cola
-                lstRegisters,lstDataTypes,lstValues = getLastModbusData()
-                #
-                # Anado o actualizo el nuevo registro que se quiere escribir
-                insertOrUpdateRegister(register,dataType,value)
-               
-        if rh.hexists(dlgid,'lastMODBUS'):  
-            if rh.hexists(dlgid,'MODBUS'):                                        # reviso si hay valores para enviar
-                if rh.hget(dlgid,'MODBUS').decode() == 'NUL':                           # reviso si ya se enviaron los anteriores
-                    lstRegisters,lstDataTypes,lstValues = getLastModbusData()
-                    sendRegToDLG(lstRegisters,lstDataTypes,lstValues,3)
-        
-        #
-        ## FIRMWARE NUEVO --------------------------
-        if register:
-            # llamado con registros nuevos para escribir   
-            if not rh.hexists(dlgid,'lastBROADCAST'):
-                #rh.hset(dlgid,'BROADCAST','[{0},{1},{2},16,{3},{4},{5}]'.format(MbusSlave,register,NumberOfReg2Read,dataTypeNew,dataCodec,value))
-                rh.hset(dlgid,'lastBROADCAST','[{0},{1},{2},16,{3},{4},{5}]'.format(MbusSlave,register,NumberOfReg2Read,dataTypeNew,dataCodec,value))
+                # extraigo la informacion que contiene el formato del firmware nuevo
+                n = 0
+                lstMbusSlave = []
+                lstRegisters = []
+                lstNumberOfReg2Read = []
+                lstDataType = []
+                lstdataCodec = []
+                lstValues = []
+                for element in lstRegistersInfo:
+                    lstMbusSlave.append(lstRegistersInfo[n])
+                    lstRegisters.append(lstRegistersInfo[n+1])
+                    lstNumberOfReg2Read.append(lstRegistersInfo[n+2])
+                    lstDataType.append(lstRegistersInfo[n+4])
+                    lstdataCodec.append(lstRegistersInfo[n+5])
+                    lstValues.append(lstRegistersInfo[n+6])
+                    n += 7
+                    if n >= len(lstRegistersInfo):
+                        break
+
+                return dict(lstMbusSlave=lstMbusSlave, lstRegisters=lstRegisters, lstNumberOfReg2Read=lstNumberOfReg2Read, lstDataType=lstDataType, lstdataCodec=lstdataCodec, lstValues=lstValues)
+        except:
+            return False
+
+    def makeFrame2Send(RegistersInfo):
+        '''
+            # le entra un diccionario con los datos de los registros y devulve el frame a escribir para el envio de los registros modbus al datalogger con el firmware nuevo o viejo según la info que se le pase en el dict.
+        '''
+        try:
+            # formato para el firmware nuevo
+            n = 0
+            format4FirmwNew = ''
+            for register in RegistersInfo['lstRegisters']:
+                if n == 0:
+                    format4FirmwNew = "[{0},{1},{2},16,{3},{4},{5}]".format(
+                        RegistersInfo['lstMbusSlave'][n], register, RegistersInfo['lstNumberOfReg2Read'][n], RegistersInfo['lstDataType'][n], RegistersInfo['lstdataCodec'][n], RegistersInfo['lstValues'][n])
+                else:
+                    format4FirmwNew = "{0}[{1},{2},{3},16,{4},{5},{6}]".format(format4FirmwNew, RegistersInfo['lstMbusSlave'][n], register, RegistersInfo[
+                                                                               'lstNumberOfReg2Read'][n], RegistersInfo['lstDataType'][n], RegistersInfo['lstdataCodec'][n], RegistersInfo['lstValues'][n])
+                n += 1
+            return format4FirmwNew
+        except:
+            # formato para el firmware viejo
+            n = 0
+            format4FirmwOld = ''
+            for register in RegistersInfo['lstRegisters']:
+                if n == 0:
+                    format4FirmwOld = "[{0},{1},{2}]".format(
+                        register, RegistersInfo['lstDataType'][n], RegistersInfo['lstValues'][n])
+                else:
+                    format4FirmwOld = "{0}[{1},{2},{3}]".format(
+                        format4FirmwOld, register, RegistersInfo['lstDataType'][n], RegistersInfo['lstValues'][n])
+                n += 1
+            return format4FirmwOld
+
+    def scrollWindows(RegistersInfo, win):
+        '''
+            toma el diccionario de entrada y le pasa una ventana deslizante para obtener dos diccionarios a la salida. Uno que esté dentro de la ventana y otro que queda fueraa de la misma
+        '''
+        try:
+            # Formato para firmwares nuevos
+            reg2send = dict(lstMbusSlave=[], lstRegisters=[], lstNumberOfReg2Read=[
+            ], lstDataType=[], lstdataCodec=[], lstValues=[])
+            reg2save = dict(lstMbusSlave=[], lstRegisters=[], lstNumberOfReg2Read=[
+            ], lstDataType=[], lstdataCodec=[], lstValues=[])
+            n = 0
+            for register in RegistersInfo['lstRegisters']:
+                if n < win:
+                    reg2send['lstMbusSlave'].append(
+                        RegistersInfo['lstMbusSlave'][n])
+                    reg2send['lstRegisters'].append(register)
+                    reg2send['lstNumberOfReg2Read'].append(
+                        RegistersInfo['lstNumberOfReg2Read'][n])
+                    reg2send['lstDataType'].append(
+                        RegistersInfo['lstDataType'][n])
+                    reg2send['lstdataCodec'].append(
+                        RegistersInfo['lstdataCodec'][n])
+                    reg2send['lstValues'].append(RegistersInfo['lstValues'][n])
+                else:
+                    reg2save['lstMbusSlave'].append(
+                        RegistersInfo['lstMbusSlave'][n])
+                    reg2save['lstRegisters'].append(register)
+                    reg2save['lstNumberOfReg2Read'].append(
+                        RegistersInfo['lstNumberOfReg2Read'][n])
+                    reg2save['lstDataType'].append(
+                        RegistersInfo['lstDataType'][n])
+                    reg2save['lstdataCodec'].append(
+                        RegistersInfo['lstdataCodec'][n])
+                    reg2save['lstValues'].append(RegistersInfo['lstValues'][n])
+                n += 1
+        except:
+            # Formato para firmwares viejos
+            reg2send = dict(lstRegisters=[], lstDataType=[], lstValues=[])
+            reg2save = dict(lstRegisters=[], lstDataType=[], lstValues=[])
+            n = 0
+            for register in RegistersInfo['lstRegisters']:
+                if n < win:
+                    reg2send['lstRegisters'].append(register)
+                    reg2send['lstDataType'].append(
+                        RegistersInfo['lstDataType'][n])
+                    reg2send['lstValues'].append(RegistersInfo['lstValues'][n])
+                else:
+                    reg2save['lstRegisters'].append(register)
+                    reg2save['lstDataType'].append(
+                        RegistersInfo['lstDataType'][n])
+                    reg2save['lstValues'].append(RegistersInfo['lstValues'][n])
+                n += 1
+        return reg2send, reg2save
+
+    def writeFrameIn(Frame2SendReg, redisKey):
+        '''
+            escribo el redisKey con el buffer o el tailFIFO el Frame2SendReg bajo ciertas condiciones.
+        '''
+        if redisKey == 'BROADCAST':
+            if Frame2SendReg:
+                rh.hset(dlgid, redisKey, Frame2SendReg)
+        elif redisKey == 'lastBROADCAST':
+            if Frame2SendReg:
+                rh.hset(dlgid, redisKey, Frame2SendReg)
             else:
-                # leo todos los registros, datos y valores que estan en cola
-                #getLastBroadcastData()
-                lstMbusSlave,lstRegisters,lstNumberOfReg2Read,lstDataType,lstdataCodec,lstValues = getLastBroadcastData()
-                #
-                # Anado o actualizo el nuevo registro que se quiere escribir
-                insertOrUpdateRegister2(lstMbusSlave,lstRegisters,lstNumberOfReg2Read,lstDataType,lstdataCodec,lstValues)
-               
-        if rh.hexists(dlgid,'lastBROADCAST'):   
-            if rh.hexists(dlgid,'BROADCAST'):                                              # reviso si hay valores para enviar
-                if rh.hget(dlgid,'BROADCAST').decode() == 'NUL':                           # reviso si ya se enviaron los anteriores
-                    lstMbusSlave,lstRegisters,lstNumberOfReg2Read,lstDataType,lstdataCodec,lstValues = getLastBroadcastData()
-                    sendRegToDLG2(lstMbusSlave,lstRegisters,lstNumberOfReg2Read,lstDataType,lstdataCodec,lstValues,8)
+                rh.hdel(dlgid, redisKey)
+        elif redisKey == 'MODBUS':
+            if Frame2SendReg:
+                rh.hset(dlgid, redisKey, Frame2SendReg)
+        elif redisKey == 'lastMODBUS':
+            if Frame2SendReg:
+                rh.hset(dlgid, redisKey, Frame2SendReg)
+            else:
+                rh.hdel(dlgid, redisKey)
 
+    def appEndReg(RegistersInfo, Desable):
+        '''
+            añado al final de la cola el registro actual si Desable is False
+        '''
+        if not Desable:
+            try:
+                # anado los valores nuevos que se quieren poner para el formato del firmware nuevo
+                RegistersInfo['lstMbusSlave'].append(MbusSlave)
+                RegistersInfo['lstRegisters'].append(register)
+                RegistersInfo['lstNumberOfReg2Read'].append(NumberOfReg2Read)
+                RegistersInfo['lstDataType'].append(dataTypeNew)
+                RegistersInfo['lstdataCodec'].append(dataCodec)
+                RegistersInfo['lstValues'].append(value)
+            except:
+                # anado los valores nuevos que se quieren poner para el formato del firmware viejo
+                RegistersInfo['lstRegisters'].append(register)
+                RegistersInfo['lstDataType'].append(dataType)
+                RegistersInfo['lstValues'].append(value)
+        return RegistersInfo
 
+    def IsExist(redisKey):
+        '''
+            se detecta si existe el redisKey devolviendo true or false
+        '''
+        if rh.hexists(dlgid, redisKey) == 1:
+            return True
+        else:
+            return False
+
+    def IsRedisConnected(host='192.168.0.6', port='6379', db='0'):
+        '''
+            se conecta con la RedisDb y devuelve el objeto rh asi como el estado de la conexion
+        '''
+        try:
+            rh = redis.Redis(host, port, db)
+            return True, rh
+        except Exception as err_var:
+            log(module=__name__, function='__init__',
+                dlgid=dlgid, msg='Redis init ERROR !!')
+            log(module=__name__, function='__init__',
+                dlgid=dlgid, msg='EXCEPTION {}'.format(err_var))
+            return False, ''
+
+    def IsNull(key):
+        '''
+            detecta si key tiene el valor NUL. En caso de que lo tenga ejecuta una limpieza
+        '''
+        try:
+            if rh.hget(dlgid, key).decode() == 'NUL':
+                # if key == 'BROADCAST':
+                #     if rh.exists(dlgid,'MODBUS'): rh.hdel(dlgid,'MODBUS')
+                #     if rh.exists(dlgid,'lastMODBUS'): rh.hdel(dlgid,'lastMODBUS')
+                # elif key == 'MODBUS':
+                #     if rh.exists(dlgid,'BROADCAST'): rh.hdel(dlgid,'BROADCAST')
+                #     if rh.exists(dlgid,'lastBROADCAST'): rh.hdel(dlgid,'lastBROADCAST')
+                return True
+            else:
+                return False
+        except:
+            return True
+
+    def IsExisting(key):
+        '''
+            verifica si existe key. Restorna True en caso positivo y False en caso negativo
+        '''
+        try:
+            if rh.hexists(dlgid, key):
+                return True
+            else:
+                return False
+        except:
+            return False
+
+    def updateReg(RegistersInfo):
+        '''
+            Actualiza el RegistersInfo que se le pasa como parametro en caso de que el registro actual este contenido en el mismo.
+            Se devuelve el diccionario actualizado y un parametro adicional que dice si se realizo actualizacion o no
+        '''
+        if register in RegistersInfo['lstRegisters']:
+            # obtengo la ubicacion del registro a actualizar
+            registerIndex = RegistersInfo['lstRegisters'].index(register)
+            try:
+                # para los firmwares nuevos
+                if RegistersInfo['lstMbusSlave'][registerIndex] == MbusSlave:
+                    updated = False
+                else:
+                    RegistersInfo['lstMbusSlave'][registerIndex] = MbusSlave
+                    updated = True
+                
+                if RegistersInfo['lstNumberOfReg2Read'][registerIndex] == NumberOfReg2Read:
+                    updated = False
+                else:
+                    RegistersInfo['lstNumberOfReg2Read'][registerIndex] = NumberOfReg2Read
+                    updated = True
+                
+                if RegistersInfo['lstdataCodec'][registerIndex] == dataCodec:
+                    updated = False
+                else:
+                    RegistersInfo['lstdataCodec'][registerIndex] = dataCodec
+                    updated = True
+                
+                if RegistersInfo['lstDataType'][registerIndex] == dataTypeNew:
+                    updated = False
+                else:
+                    RegistersInfo['lstDataType'][registerIndex] = dataTypeNew
+                    updated = True
+                
+                if RegistersInfo['lstValues'][registerIndex] == value:
+                    updated = False
+                else:
+                    RegistersInfo['lstValues'][registerIndex] = value
+                    updated = True
+
+            except:
+                # para los firmwares viejos
+                if RegistersInfo['lstDataType'][registerIndex] == dataType:
+                    updated = False
+                else:
+                    RegistersInfo['lstDataType'][registerIndex] = dataType
+                    updated = True
+                
+                if RegistersInfo['lstValues'][registerIndex] == value:
+                    updated = False
+                else:
+                    RegistersInfo['lstValues'][registerIndex] = value
+                    updated = True
+             
+            inRegInfo = True
+        else:
+            inRegInfo = False
+            updated = False
+        return RegistersInfo, inRegInfo, updated
+
+    def mbTagGenerator(delete):
+        '''en cada llamada crea valores continuos que van desde 0-50'''
+        if not delete:
+            if rh.hexists(dlgid, MBTAG) == 1:
+                rdMbtag = int(rh.hget(dlgid, MBTAG).decode())
+                if (rdMbtag == 50):
+                    rh.hset(dlgid, MBTAG, 1)
+                else:
+                    rh.hset(dlgid, MBTAG, rdMbtag + 1)
+            else:
+                rh.hset(dlgid, MBTAG, 1)
+        else:
+            if rh.hexists(dlgid, MBTAG) == 1:
+                rh.hdel(dlgid, MBTAG)
+
+    def IsOkRx():
+        rdMbtag = rh.hget(dlgid, MBTAG).decode() if rh.hexists(dlgid, MBTAG) == 1 else '-1'
+
+        if (fdbk == 'ACK' and rdMbtag == mbTag):
+            return True 
+        else:
+            return False
+
+    def setKeyNull(key):
+        rh.hset(dlgid, key, 'NUL')
+
+    # main program
+    redisConnection,rh = IsRedisConnected(host=Config['REDIS']['host'], port=Config['REDIS']['port'], db=Config['REDIS']['db'])
+    # redisConnection, rh = IsRedisConnected()
+    if redisConnection:
+        if register:
+            # para firmwares nuevos
+            if IsExist('BROADCAST'):
+
+                if IsNull('BROADCAST'):
+
+                    if IsExisting('lastBROADCAST'):
+
+                        dictLastBROADCAST = getRegistersInfo('lastBROADCAST')
+
+                        dictLastBROADCAST, IsInlastBROADCAST, WasUpdatedLastBROADCAST = updateReg(            
+                            dictLastBROADCAST)
+
+                        dictLastBROADCAST = appEndReg(
+                            dictLastBROADCAST, IsInlastBROADCAST)
+
+                        RegistersInfo2Send, RegistersInfo2Save = scrollWindows(
+                            dictLastBROADCAST, windowsFirmNuevo)
+
+                        Frame2SendRegFirmwNew = makeFrame2Send(
+                            RegistersInfo2Send)
+
+                        Frame2SaveRegFirmwNew = makeFrame2Send(
+                            RegistersInfo2Save)
+
+                        mbTagGenerator(False)
+
+                        writeFrameIn(Frame2SendRegFirmwNew, 'BROADCAST')
+
+                        writeFrameIn(Frame2SaveRegFirmwNew, 'lastBROADCAST')
+
+                    else:
+
+                        Frame2SendRegFirmwNew = makeFrame2Send(dict(lstMbusSlave=[MbusSlave], lstRegisters=[register], lstNumberOfReg2Read=[
+                                                               NumberOfReg2Read], lstDataType=[dataTypeNew], lstdataCodec=[dataCodec], lstValues=[value]))
+
+                        mbTagGenerator(False)
+
+                        writeFrameIn(Frame2SendRegFirmwNew, 'BROADCAST')
+                else:
+
+                    if IsExisting('lastBROADCAST'):
+
+                        dictBROADCAST = getRegistersInfo('BROADCAST')
+
+                        dictBROADCAST, IsInBROADCAST, WasUpdatedBROADCAST = updateReg(
+                            dictBROADCAST)
+
+                        if not IsInBROADCAST:
+
+                            dictLastBROADCAST = getRegistersInfo(
+                                'lastBROADCAST')
+
+                            dictLastBROADCAST, IsInLastBroadCast, WasUpdatedLastBroadCast = updateReg(
+                                dictLastBROADCAST)
+
+                            dictLastBROADCAST = appEndReg(
+                                dictLastBROADCAST, IsInLastBroadCast)
+
+                            Frame2SaveRegFirmwNew = makeFrame2Send(
+                                dictLastBROADCAST)
+
+                            writeFrameIn(Frame2SaveRegFirmwNew,
+                                         'lastBROADCAST')
+
+                            if IsOkRx():
+
+                                RegistersInfo2Send, RegistersInfo2Save = scrollWindows(
+                                    dictLastBROADCAST, windowsFirmNuevo)
+
+                                Frame2SendRegFirmwNew = makeFrame2Send(
+                                    RegistersInfo2Send)
+
+                                Frame2SaveRegFirmwNew = makeFrame2Send(
+                                    RegistersInfo2Save)
+
+                                mbTagGenerator(False)
+
+                                writeFrameIn(
+                                    Frame2SendRegFirmwNew, 'BROADCAST')
+
+                                writeFrameIn(Frame2SaveRegFirmwNew,
+                                             'lastBROADCAST')
+
+                        else:
+
+                            if WasUpdatedBROADCAST:
+
+                                Frame2SendRegFirmwNew = makeFrame2Send(
+                                    dictBROADCAST)
+                                
+                                mbTagGenerator(False)
+
+                                writeFrameIn(Frame2SendRegFirmwNew, 'BROADCAST')
+
+                    else:
+
+                        dictBROADCAST = getRegistersInfo('BROADCAST')
+
+                        dictBROADCAST, IsInBROADCAST, WasUpdatedInBroadCast = updateReg(
+                            dictBROADCAST)
+
+                        if not IsInBROADCAST:
+
+                            if len(dictBROADCAST['lstRegisters']) < windowsFirmNuevo:
+
+                                dictBROADCAST = appEndReg(
+                                    dictBROADCAST, IsInBROADCAST)
+
+                                Frame2SendRegFirmwNew = makeFrame2Send(
+                                    dictBROADCAST)
+
+                                mbTagGenerator(False)
+
+                                writeFrameIn(
+                                    Frame2SendRegFirmwNew, 'BROADCAST')
+
+                            else:
+
+                                Frame2SaveRegFirmwNew = makeFrame2Send(dict(lstMbusSlave=[MbusSlave], lstRegisters=[register], lstNumberOfReg2Read=[
+                                                                       NumberOfReg2Read], lstDataType=[dataTypeNew], lstdataCodec=[dataCodec], lstValues=[value]))
+
+                                writeFrameIn(
+                                    Frame2SaveRegFirmwNew, 'lastBROADCAST')
+
+                        else:
+
+                            if WasUpdatedInBroadCast:
+                            
+                                Frame2SendRegFirmwNew = makeFrame2Send(
+                                    dictBROADCAST)
+
+                                mbTagGenerator(False)
+
+                                writeFrameIn(Frame2SendRegFirmwNew, 'BROADCAST')
+
+            # para fimrwares viejos
+            if IsExist('MODBUS'):
+
+                if IsNull('MODBUS'):
+
+                    if IsExisting('lastMODBUS'):
+
+                        dictlastMODBUS = getRegistersInfo('lastMODBUS')
+
+                        dictlastMODBUS, IsInlastMODBUS, IsUpdatedlastMODBUS = updateReg(dictlastMODBUS)
+
+                        dictlastMODBUS = appEndReg(dictlastMODBUS, IsInlastMODBUS)
+
+                        RegistersInfo2Send, RegistersInfo2Save = scrollWindows(
+                            dictlastMODBUS, windowsFirmViejo)
+
+                        Frame2SendRegFirmwOld = makeFrame2Send(
+                            RegistersInfo2Send)
+
+                        Frame2SaveRegFirmwOld = makeFrame2Send(
+                            RegistersInfo2Save)
+
+                        writeFrameIn(Frame2SendRegFirmwOld, 'MODBUS')
+
+                        writeFrameIn(Frame2SaveRegFirmwOld, 'lastMODBUS')
+
+                    else:
+
+                        Frame2SendRegFirmwOld = makeFrame2Send(
+                            dict(lstRegisters=[register], lstDataType=[dataType], lstValues=[value]))
+
+                        writeFrameIn(Frame2SendRegFirmwOld, 'MODBUS')
+
+                else:
+
+                    if IsExisting('lastMODBUS'):
+
+                        dictMODBUS = getRegistersInfo('MODBUS')
+
+                        dictMODBUS, IsInMODBUS, WasUpdatedInMODBUS = updateReg(dictMODBUS)
+
+                        if not IsInMODBUS:
+
+                            dictLastMODBUS = getRegistersInfo('lastMODBUS')
+
+                            dictLastMODBUS, IsInLastMODBUS, WasUpdatedLastMODBUS = updateReg(
+                                dictLastMODBUS)
+
+                            dictLastMODBUS = appEndReg(
+                                dictLastMODBUS, IsInLastMODBUS)
+
+                            Frame2SaveRegFirmwOld = makeFrame2Send(
+                                dictLastMODBUS)
+
+                            writeFrameIn(Frame2SaveRegFirmwOld, 'lastMODBUS')
+
+                        else:
+
+                            Frame2SendRegFirmwOld = makeFrame2Send(dictMODBUS)
+
+                            writeFrameIn(Frame2SendRegFirmwOld, 'MODBUS')
+
+                    else:
+
+                        dictMODBUS = getRegistersInfo('MODBUS')
+
+                        dictMODBUS, IsInMODBUS, WasUpdatedMODBUS = updateReg(dictMODBUS)
+
+                        if not IsInMODBUS:
+
+                            if len(dictMODBUS['lstRegisters']) < windowsFirmViejo:
+
+                                dictMODBUS = appEndReg(
+                                    dictMODBUS, IsInMODBUS)
+
+                                Frame2SendRegFirmwOld = makeFrame2Send(
+                                    dictMODBUS)
+
+                                writeFrameIn(Frame2SendRegFirmwOld, 'MODBUS')
+
+                            else:
+
+                                Frame2SaveRegFirmwOld = makeFrame2Send(
+                                    dict(lstRegisters=[register], lstDataType=[dataTypeNew], lstValues=[value]))
+
+                                writeFrameIn(
+                                    Frame2SaveRegFirmwOld, 'lastMODBUS')
+
+                        else:
+
+                            Frame2SendRegFirmwOld = makeFrame2Send(dictMODBUS)
+
+                            writeFrameIn(Frame2SendRegFirmwOld, 'MODBUS')
+
+        else:
+            # para firmwares nuevos
+            if IsExist('BROADCAST'):
+
+                if IsNull('BROADCAST'):
+
+                    if IsExisting('lastBROADCAST'):
+
+                        RegistersInfo = getRegistersInfo('lastBROADCAST')
+
+                        RegistersInfo2Send, RegistersInfo2Save = scrollWindows(
+                            RegistersInfo, windowsFirmNuevo)
+
+                        Frame2SendRegFirmwNew = makeFrame2Send(
+                            RegistersInfo2Send)
+
+                        Frame2SaveRegFirmwNew = makeFrame2Send(
+                            RegistersInfo2Save)
+
+                        mbTagGenerator(False)
+
+                        writeFrameIn(Frame2SendRegFirmwNew, 'BROADCAST')
+
+                        writeFrameIn(Frame2SaveRegFirmwNew, 'lastBROADCAST')
+                else:
+
+                    if IsOkRx():
+                        if IsExisting('lastBROADCAST'):
+
+                            RegistersInfo = getRegistersInfo('lastBROADCAST')
+
+                            RegistersInfo2Send, RegistersInfo2Save = scrollWindows(
+                                RegistersInfo, windowsFirmNuevo)
+
+                            Frame2SendRegFirmwNew = makeFrame2Send(
+                                RegistersInfo2Send)
+
+                            Frame2SaveRegFirmwNew = makeFrame2Send(
+                                RegistersInfo2Save)
+
+                            mbTagGenerator(False)
+
+                            writeFrameIn(Frame2SendRegFirmwNew, 'BROADCAST')
+
+                            writeFrameIn(Frame2SaveRegFirmwNew,
+                                         'lastBROADCAST')
+
+                        else:
+
+                            setKeyNull('BROADCAST')
+
+                            mbTagGenerator(True)
+
+            # para firmwares viejos
+            if IsExist('MODBUS'):
+
+                if IsNull('MODBUS'):
+
+                    if IsExisting('lastMODBUS'):
+
+                        RegistersInfo = getRegistersInfo('lastMODBUS')
+
+                        RegistersInfo2Send, RegistersInfo2Save = scrollWindows(
+                            RegistersInfo, windowsFirmViejo)
+
+                        Frame2SendRegFirmwOld = makeFrame2Send(
+                            RegistersInfo2Send)
+
+                        Frame2SaveRegFirmwOld = makeFrame2Send(
+                            RegistersInfo2Save)
+
+                        writeFrameIn(Frame2SendRegFirmwOld, 'MODBUS')
+
+                        writeFrameIn(Frame2SaveRegFirmwOld, 'lastMODBUS')     
+
+def u_calcular_ckechsum(line):
+    '''
+     Cambiamos la forma de calcular el checksum porque el xor
+     si ponemos 2 veces el miso caracter no lo detecta !!!!
+     '''
+    log(module=__name__, function='u_calcular_ckechsum', dlgid='ERROR', msg='CKS line [{0}]'.format(line))
+    cks = 0
+    for c in line:
+        #cks ^= ord(c)
+        cks = (cks + ord(c)) % 256
+    return cks
 
         
 

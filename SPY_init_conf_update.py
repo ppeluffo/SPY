@@ -13,7 +13,7 @@ Created on Thu Aug  1 21:43:48 2019
 """
 
 from spy_log import log
-from spy_utils import u_send_response
+from spy_utils import u_send_response, u_convert_fw_version_to_str
 from spy_bd_gda import BDGDA
 from spy import Config
 
@@ -30,6 +30,7 @@ class INIT_CONF_UPDATE:
         '''
         self.dlgid = dlgid
         self.version = version
+        self.fw_version = u_convert_fw_version_to_str(version)
         self.payload_dict = payload_dict
         self.dlgbdconf_dict = dlgbdconf_dict
         self.response = 'OK'
@@ -53,7 +54,7 @@ class INIT_CONF_UPDATE:
 
         log(module=__name__, function='process', level='SELECT', dlgid=self.dlgid, msg='process_RSP: ({})'.format(self.response))
         pload = 'CLASS:UPDATE;{}'.format(self.response )
-        u_send_response('INIT', pload)
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='process', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 

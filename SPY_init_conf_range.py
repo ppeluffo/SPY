@@ -7,7 +7,7 @@ Created on Wed Aug  7 20:51:49 2019
 """
 
 from spy_log import log
-from spy_utils import u_send_response
+from spy_utils import u_send_response, u_convert_fw_version_to_str
 
 # ------------------------------------------------------------------------------
 
@@ -16,6 +16,7 @@ class INIT_CONF_RANGE:
     def __init__(self, dlgid, version, dconf ):
         self.dlgid = dlgid
         self.version = version
+        self.fw_version = u_convert_fw_version_to_str(version)
         self.dconf = dconf
 
         self.name = dconf.get(('RANGE', 'NAME'), 'X')
@@ -29,7 +30,7 @@ class INIT_CONF_RANGE:
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confRange_RSP: ({})'.format(self.response))
         pload = 'CLASS:RANGE;{}'.format(self.response )
-        u_send_response('INIT', pload)
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 

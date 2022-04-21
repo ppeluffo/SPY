@@ -122,20 +122,20 @@ class Redis():
         '''
         En los nuevos frames a partir de Version 4.0.4, el datalogger nos manda un id ( ACK o NACK )
         y un valor que indica el MBTAG.
+        NO BORRO EL CAMPO BROADCAST.
         '''
+        response = ""
+        if self.rh.hexists(self.dlgid, 'MBTAG'):
+            mbus_tag = self.rh.hget(self.dlgid, 'MBTAG').decode()
+            response += 'MBTAG:%s;' % mbus_tag
+
         if self.rh.hexists(self.dlgid, 'BROADCAST'):
             mbus_line = self.rh.hget(self.dlgid, 'BROADCAST').decode()
             if mbus_line != 'NUL':
-                log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid,
-                    msg='REDIS-MODBUS-BCAST:{}'.format(mbus_line))
-                self.response = 'MBUS=%s;' % mbus_line
+                log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='REDIS-MODBUS-BCAST:{}'.format(mbus_line))
+                response += 'MBUS=%s;' % mbus_line
 
-                # Version 20220307: Borro cuando llega un ACK.
-                if rcv_mbus_tag_id == 'ACK':
-                    self.rh.hset(self.dlgid, 'BROADCAST', 'NUL')
-                elif rcv_mbus_tag_id == 'NACK':
-                    log(module=__name__, function='get_cmd_modbus', dlgid=self.dlgid, msg='ERROR: NACK rcvd. No borro comando.')
-
+        self.response = response
         return
 
     def get_cmd_modbus(self,fw_version=200, rcv_mbus_tag_id=None, rcv_mbus_tag_val=None ):
@@ -201,9 +201,14 @@ class Redis():
                 self.rh.hset(dlg_rem, 'BROADCAST', 'NUL')
         #
 
-    def insert_bcast_line_old(self, list_old_format):
+    def insert_bcast_line_old(self, list_old_format, rcv_mbus_tag_id=None, rcv_mbus_tag_val=None ):
         from spy_utils import mbusWrite
         
+        # print('rcv_mbus_tag_id')
+        # print(rcv_mbus_tag_id)
+        # print('rcv_mbus_tag_val')
+        # print(rcv_mbus_tag_val)
+
         # Inserta lineas MODBUS en el viejo formato
         for t in list_old_format:
             (dlgid, register, dataType, value) = t
@@ -214,7 +219,7 @@ class Redis():
                     
         # si no hay datos llamo a la funcion por si le queda en cola algo para transmitir
         if not list_old_format:
-            mbusWrite(self.dlgid, register=None, dataType=None, value=None)
+            mbusWrite(self.dlgid, register=None, dataType=None, value=None, fdbk=rcv_mbus_tag_id, mbTag=rcv_mbus_tag_val)
 
     def execute_callback(self):
         '''

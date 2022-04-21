@@ -1,6 +1,5 @@
-#!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
-##!/usr/bin/python3 -u
-
+#!/usr/bin/python3 -u
+##!/home/pablo/Spymovil/python/pyenv/ml/bin/python3
 
 
 """
@@ -110,6 +109,7 @@ def print_error():
      DEBUG_CONF_MBUS_LOW
      DEBUG_CONF_MBUS_MED
      DEBUG_CONF_MBUS_HIGH
+     DEBUG_CONF_MBUS
      DEBUG_CONF_PILOTO
      DEBUG_CONF_SMS
      DEBUG_CONF_GENPULSOS
@@ -242,6 +242,12 @@ if __name__ == '__main__':
         elif sys.argv[1] == 'DEBUG_CONF_MBUS_HIGH':
             # Uso un query string fijo de test del archivo .conf
             query_string = Config['DEBUG']['debug_conf_mbus_high']
+            os.environ['QUERY_STRING'] = query_string
+            print('TEST: query_string: {0}'.format(query_string))
+
+        elif sys.argv[1] == 'DEBUG_CONF_MBUS':
+            # Uso un query string fijo de test del archivo .conf
+            query_string = Config['DEBUG']['debug_conf_mbus']
             os.environ['QUERY_STRING'] = query_string
             print('TEST: query_string: {0}'.format(query_string))
 

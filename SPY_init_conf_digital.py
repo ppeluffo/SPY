@@ -40,8 +40,8 @@ class INIT_CONF_DIGITAL:
         El procesamiento consiste en logear el string de respuesta y enviarlo al datalogger.
         '''
         log(module=__name__, function='get_response_string', level='SELECT', dlgid=self.dlgid, msg='confDigital_RSP: ({})'.format(self.response))
-        pload = 'CLASS:DIGITAL;{}'.format(self.response )
-        u_send_response('INIT', pload)
+        pload = 'CLASS:DIGITAL;{};'.format(self.response )
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 

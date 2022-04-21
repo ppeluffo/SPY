@@ -38,7 +38,7 @@ class INIT_CONF_APP:
         else:
             pload = 'CLASS:APP_A;{}'.format(self.response )
         #
-        u_send_response('INIT', pload)
+        u_send_response(self.fw_version, 'INIT', pload)
         log(module=__name__, function='send_response', dlgid=self.dlgid, msg='PLOAD={0}'.format(pload))
         return
 
