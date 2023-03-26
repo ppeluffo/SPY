@@ -1,4 +1,4 @@
-#!/usr/aut_env/bin/python3.8
+#!/usr/bin/python3.8
 '''
 CONTROL DE ERRORES EN CTRL_PpotPaysandu
 

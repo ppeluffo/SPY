@@ -7,7 +7,7 @@ FLOWCHART: project 				-> 	https://drive.google.com/file/d/1YFjm_3HncAyEX1VBOtet
 
 
 
-ENVIROMENT: #!/usr/aut_env/bin/python3.8
+ENVIROMENT: #!/usr/bin/python3.8
 
 # LOGS: 
 ## SYSLOG

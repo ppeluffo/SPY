@@ -42,24 +42,27 @@ def log(module, function, server = 'commsR1', msg='', dlgid='00000', console=Fal
     Si el level es SELECT, dependiendo del dlgid se muestra o no
     Si console es ON se hace un print del mensaje
     '''
-    dlg_list = Config['SELECT']['list_dlg']
-    list_dlg = ast.literal_eval( dlg_list )
+    try: 
+        dlg_list = Config['SELECT']['list_dlg']
+        list_dlg = ast.literal_eval( dlg_list )
 
-    if level == 'SELECT':
-        if dlgid in list_dlg:
-            logging.info('[{0}][{1}][{2}][{3}]: [{4}]'.format( server,dlgid, module,function, msg))
-            if console == True:
-                print('Process [{0}][{1}][{2}][{3}]'.format( module,function,dlgid,msg))
-            return
-        else:
-            return
+        if level == 'SELECT':
+            if dlgid in list_dlg:
+                logging.info('[{0}][{1}][{2}][{3}]: [{4}]'.format( server,dlgid, module,function, msg))
+                if console == True:
+                    print('Process [{0}][{1}][{2}][{3}]'.format( module,function,dlgid,msg))
+                    
+                return
+            else:
+                return
 
-    logging.info('[{0}][{1}][{2}][{3}]: [{4}]'.format( server, dlgid, module,function,msg))
-    if console:
-        print('Process [{0}][{1}][{2}][{3}]'.format( module, function, dlgid, msg))
+        logging.info('[{0}][{1}][{2}][{3}]: [{4}]'.format( server, dlgid, module,function,msg))
+        if console:
+            print('Process [{0}][{1}][{2}][{3}]'.format( module, function, dlgid, msg))
 
-    return
-
+        return
+    except Exception as e:
+        print('Error en log: {0}'.format(e))
 
 if __name__ == '__main__':
     #from spy import Config

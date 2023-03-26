@@ -1,4 +1,4 @@
-#!/usr/aut_env/bin/python3.8
+#!/usr/bin/python3.8
 '''
 DETECCION DE FUNCIONES ADICIONALES DE PYTHON
 

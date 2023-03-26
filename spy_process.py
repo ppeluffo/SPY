@@ -151,8 +151,8 @@ def process_file(file):
 
         if Config['SITE']['site'] == 'ute':
             move_file_to_ute_dir(file)
-        else:
-            move_file_to_bkup_dir(file)
+        # else:
+            # move_file_to_bkup_dir(file)
 
         return
 

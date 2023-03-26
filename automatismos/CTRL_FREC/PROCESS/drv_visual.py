@@ -1,4 +1,4 @@
-#!/usr/aut_env/bin/python3.8
+#!/usr/bin/python3.8
 '''
 DRIVER VISUALIZACION DE CTRL_FREC
 

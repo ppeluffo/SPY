@@ -1,4 +1,4 @@
-#!/usr/aut_env/bin/python3.8
+#!/usr/bin/python3.8
 '''
 SELECCION DE AUTOMATISMOS
 
@@ -30,6 +30,7 @@ if __name__ == '__main__':
     try:    
         STR_CONFIG = sys.argv[1]
         LIST_CONFIG = STR_CONFIG.split(',')
+        print(STR_CONFIG)
     except:
         print('HELP')
         print('    ARGUMENT = DLGID_CTRL')
@@ -183,7 +184,7 @@ def run_perforation_process(dlgid):
     
 
     try:
-        os.system('{0}{1} {2} {3}'.format(path,file,param,param_value));
+        os.system('{0}{1} {2} {3}'.format(path,file,param,param_value))
     except:
         logs.print_inf(name_function, 'ERROR AL CORRER LAS PERFORACIONES EN PERL')
 
