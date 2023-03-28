@@ -65,6 +65,11 @@ class Redis():
         '''
         TAG = 'LINE='
         line = TAG + line
+
+        d_tmp = { k:v for (k, v) in [x.split(':') for x in line.split(';') if ':' in x ] }
+        import pickle
+        pkline = pickle.dumps(d_tmp)
+
         if self.connected:
             try:
                 self.rh.hset(self.dlgid, 'LINE', line)
@@ -72,6 +77,13 @@ class Redis():
                 log(module=__name__, function='insert_line', dlgid=self.dlgid, msg='ERROR: Redis insert line err !!')
                 log(module=__name__, function='insert_line', dlgid=self.dlgid,
                     msg='ERROR: EXCEPTION {}'.format(err_var))
+
+            log(module=__name__, function='insert_line', dlgid=self.dlgid, msg='DEBUG: insert pkline') 
+            try:
+                self.rh.hset(self.dlgid, 'PKLINE', pkline )
+            except Exception:
+                log(module=__name__, function='insert_line', dlgid=self.dlgid, msg='ERROR: Redis insert pkline err !!')
+
         else:
             log(module=__name__, function='insert_line', dlgid=self.dlgid, msg='ERROR: Redis not-connected !!')
         return

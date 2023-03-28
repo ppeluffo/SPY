@@ -571,7 +571,7 @@ class BDGDA:
         '''
         log(module=__name__, function='get_dlg_remotos', dlgid=dlgid, level='SELECT', msg='start')
         if not self.connect():
-            log(module=__name__, unction='get_dlg_remotos', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
+            log(module=__name__, function='get_dlg_remotos', dlgid=dlgid, msg='ERROR: can\'t connect gda !!')
             return None
         sql = """SELECT dlg, medida, rem_mbus_slave, rem_mbus_regaddress, tipo,codec
                 FROM spx_reenvio_modbus as rm INNER JOIN spx_unidades as u ON rm.dlgid_id = u.id

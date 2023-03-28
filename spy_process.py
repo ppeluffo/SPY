@@ -31,6 +31,8 @@ def move_file_to_error_dir(file):
     # Muevo el archivo al error.
     log(module=__name__, server='processR1', function='move_file_to_error_dir', dlgid='SPYPROC01', msg='ERROR: FILE {}'.format(file))
     dirname, filename = os.path.split(file)
+    os.remove(file)
+    return 
     try:
         errdirname = Config['PROCESS']['process_err_path']
         errfile = os.path.join(errdirname, filename)
@@ -44,6 +46,9 @@ def move_file_to_error_dir(file):
 
 def move_file_to_bkup_dir(file):
     # Muevo el archivo al backup.
+    os.remove(file)
+    return
+
     dirname, filename = os.path.split(file)
     try:
         bkdirname = Config['PROCESS']['process_bk_path']
