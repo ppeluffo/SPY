@@ -84,12 +84,6 @@ class BDOSE_PQ:
                 return True
             else:
                 log(module=__name__, server=self.server, function='insert_data_line PQ', dlgid=dlgid,msg='ERROR: exec EXCEPTION {}'.format( err_var))
-                #log(module=__name__, server=self.server, function='insert_data_line PQ', dlgid=dlgid,msg='DEBUG ERROR: dlgid {}'.format(dlgid))
-                #log(module=__name__, server=self.server, function='insert_data_line PQ', dlgid=dlgid,msg='DEBUG ERROR: timestamp {}'.format(d.get('timestamp', '00-00-00 00:00')))
-                #log(module=__name__, server=self.server, function='insert_data_line PQ', dlgid=dlgid,msg='DEBUG ERROR: pA {}'.format(d.get('pA', '0')))
-                #log(module=__name__, server=self.server, function='insert_data_line PQ', dlgid=dlgid,msg='DEBUG ERROR: pB {}'.format(d.get('pB', '0')))
-                #log(module=__name__, server=self.server, function='insert_data_line PQ', dlgid=dlgid,msg='DEBUG ERROR: q0 {}'.format(d.get('q0', '0')))
-                #log(module=__name__, server=self.server, function='insert_data_line PQ', dlgid=dlgid,msg='DEBUG ERROR: bt {}'.format(d.get('bt', '0')))
                 return False
 
         return True
@@ -120,21 +114,21 @@ class BDOSE_PQ:
             log(module=__name__, server=self.server, function='insert_data_online PQ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
             return False
 
-        sql = """DELETE FROM PQ_tbDatosOnline WHERE dlgId = '{0}' AND  pkDatos NOT IN ( SELECT * FROM ( SELECT pkDatos FROM PQ_tbDatosOnline WHERE dlgId = '{0}' \
-        ORDER BY fechaData DESC LIMIT 1) AS temp )""".format(dlgid)
+        # sql = """DELETE FROM PQ_tbDatosOnline WHERE dlgId = '{0}' AND  pkDatos NOT IN ( SELECT * FROM ( SELECT pkDatos FROM PQ_tbDatosOnline WHERE dlgId = '{0}' \
+        # ORDER BY fechaData DESC LIMIT 1) AS temp )""".format(dlgid)
 
-        try:
-            query = text(sql)
-        except Exception as err_var:
-            log(module=__name__, server=self.server, function='insert_data_online PQ', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
-            log(module=__name__, server=self.server, function='insert_data_online PQ', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
-            return False
+        # try:
+        #     query = text(sql)
+        # except Exception as err_var:
+        #     log(module=__name__, server=self.server, function='insert_data_online PQ', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
+        #     log(module=__name__, server=self.server, function='insert_data_online PQ', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+        #     return False
 
-        try:
-            self.conn.execute(query)
-        except Exception as err_var:
-            log(module=__name__, server=self.server, function='insert_data_online PQ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
-            return False
+        # try:
+        #     self.conn.execute(query)
+        # except Exception as err_var:
+        #     log(module=__name__, server=self.server, function='insert_data_online PQ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
+        #     return False
 
         return True
 
@@ -196,19 +190,19 @@ class BDOSE_PZ (BDOSE_PQ):
             log(module=__name__, function='insert_data_online PZ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
             return False
 
-        sql = """DELETE FROM PZ_tbDatosOnline WHERE pozoId = '{0}' AND  pkDatos NOT IN ( SELECT * FROM ( SELECT pkDatos FROM PZ_tbDatosOnline WHERE pozoId = '{0}' ORDER BY fechaData DESC LIMIT 1) AS temp )""".format(dlgid)
-        try:
-            query = text(sql)
-        except Exception as err_var:
-            log(module=__name__, function='insert_data_online PZ', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
-            log(module=__name__, function='insert_data_online PZ', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
-            return False
+        # sql = """DELETE FROM PZ_tbDatosOnline WHERE pozoId = '{0}' AND  pkDatos NOT IN ( SELECT * FROM ( SELECT pkDatos FROM PZ_tbDatosOnline WHERE pozoId = '{0}' ORDER BY fechaData DESC LIMIT 1) AS temp )""".format(dlgid)
+        # try:
+        #     query = text(sql)
+        # except Exception as err_var:
+        #     log(module=__name__, function='insert_data_online PZ', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
+        #     log(module=__name__, function='insert_data_online PZ', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+        #     return False
 
-        try:
-            self.conn.execute(query)
-        except Exception as err_var:
-            log(module=__name__, function='insert_data_online PZ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
-            return False
+        # try:
+        #     self.conn.execute(query)
+        # except Exception as err_var:
+        #     log(module=__name__, function='insert_data_online PZ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
+        #     return False
 
         return True
 
@@ -270,20 +264,20 @@ class BDOSE_TQ (BDOSE_PQ):
             log(module=__name__, function='insert_data_online TQ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
             return False
 
-        sql = """DELETE FROM TQ_tbDatosOnline WHERE tanqueId = '{0}' AND  pkDatos NOT IN ( SELECT * FROM ( SELECT pkDatos FROM TQ_tbDatosOnline WHERE tanqueId = '{0}' \
-        ORDER BY fechaData DESC LIMIT 1) AS temp )""".format(dlgid)
-        try:
-            query = text(sql)
-        except Exception as err_var:
-            log(module=__name__, function='insert_data_online TQ', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
-            log(module=__name__, function='insert_data_online TQ', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
-            return False
+        # sql = """DELETE FROM TQ_tbDatosOnline WHERE tanqueId = '{0}' AND  pkDatos NOT IN ( SELECT * FROM ( SELECT pkDatos FROM TQ_tbDatosOnline WHERE tanqueId = '{0}' \
+        # ORDER BY fechaData DESC LIMIT 1) AS temp )""".format(dlgid)
+        # try:
+        #     query = text(sql)
+        # except Exception as err_var:
+        #     log(module=__name__, function='insert_data_online TQ', dlgid=dlgid, msg='ERROR: SQLQUERY: {}'.format(sql))
+        #     log(module=__name__, function='insert_data_online TQ', dlgid=dlgid, msg='ERROR: EXCEPTION {}'.format(err_var))
+        #     return False
 
-        try:
-            self.conn.execute(query)
-        except Exception as err_var:
-            log(module=__name__, function='insert_data_online TQ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
-            return False
+        # try:
+        #     self.conn.execute(query)
+        # except Exception as err_var:
+        #     log(module=__name__, function='insert_data_online TQ', dlgid=dlgid,msg='ERROR: BDOSE exec EXCEPTION {}'.format(err_var))
+        #     return False
 
         return True
 

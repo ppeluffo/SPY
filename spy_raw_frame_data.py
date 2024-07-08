@@ -73,8 +73,8 @@ class RAW_DATA_frame:
         log(module=__name__, function='save_payload_in_file', dlgid=self.dlgid, level='SELECT', msg='FILE: {}'.format(dat_file))
 
         # Abro un archivo temporal donde guardo los datos
-        with open(tmp_file, 'w') as fh:
-            fh.write(self.payload_str)
+        # with open(tmp_file, 'w') as fh:
+        #     fh.write(self.payload_str)
 
         # Al final lo renombro.
         #os.rename(tmp_file, dat_file)
